@@ -1,129 +1,99 @@
 import random
-import time
 
-# Game settings
-player_name = ""
-distance_to_travel = 200  # Total distance to Oregon
-current_distance = 0
-health = 100
-food = 100
-pioneers = 5
+def display_ascii_intro():
+    print("""
+                ('-. .-.   ('-.                                  
+( OO )  / _(  OO)                                 
+,--. ,--.(,------.,--.      ,--.      .-'),-----. 
+|  | |  | |  .---'|  |.-')  |  |.-') ( OO'  .-.  '
+|   .|  | |  |    |  | OO ) |  | OO )/   |  | |  |
+|       |(|  '--. |  |`-' | |  |`-' |\_) |  |\|  |
+|  .-.  | |  .--'(|  '---.'(|  '---.'  \ |  | |  |
+|  | |  | |  `---.|      |  |      |    `'  '-'  '
+`--' `--' `------'`------'  `------'      `-----' 
+    """)
 
-# ASCII Art for visuals
-ascii_art = {
-    "start": r"""
-        __        __          _   _       _       
-        \ \      / /         | | | |     | |      
-         \ \ /\ / /__  _ __| |_| |_ ___| |_ ___ 
-          \ V  V / _ \| '__| __| __/ _ \ __/ _ \
-           \_/\_/_/ \_\_|  \__|\__\___/\__\___/ 
-                                                  
-    """,
-    "camp": r"""
-        / \   
-       / _ \  
-      | (_) | 
-       \___/  
-    """,
-    "hunting": r"""
-        ,    ,    ,
-        |\   |\   |\
-        | \  | \  | \
-        |  \ |  \ |  \
-       (    ) (    ) ( 
-        `--'   `--'   `--' 
-    """,
-    "sick": r"""
-        .--.
-       |o_o |
-       |:_/ |
-      //   \ \
-     (|     | )
-    /'\_   _/`\
-    \___)=(___/ 
-    """,
-    "end": r"""
-         ______  _   _  _______  _____    _____  _    _ 
-        |  ____|| \ | ||  __ \ \ \   / /  / ____|| |  | |
-        | |__   |  \| || |  | | \ \_/ /  | (___  | |__| |
-        |  __|  | . ` || |  | |  \   /    \___ \ |  __  |
-        | |____ | |\  || |__| |   | |     ____) || |  | |
-        |______||_| \_||_____/    |_|    |_____/ |_|  |_|
-    """
-}
+def display_ascii_end():
+    print("""
+                                      _ .-') _ .-. .-')                 ('-.   
+                                     ( (  OO) )\  ( OO )              _(  OO)  
+  ,----.     .-'),-----.  .-'),-----. \     .'_ ;-----.\  ,--.   ,--.(,------. 
+ '  .-./-') ( OO'  .-.  '( OO'  .-.  ',`'--..._)| .-.  |   \  `.'  /  |  .---' 
+ |  |_( O- )/   |  | |  |/   |  | |  ||  |  \  '| '-' /_).-')     /   |  |     
+ |  | .--, \\_) |  |\|  |\_) |  |\|  ||  |   ' || .-. `.(OO  \   /   (|  '--.  
+(|  | '. (_/  \ |  | |  |  \ |  | |  ||  |   / :| |  \  ||   /  /\_   |  .--'  
+ |  '--'  |    `'  '-'  '   `'  '-'  '|  '--'  /| '--'  /`-./  /.__)  |  `---. 
+  `------'       `-----'      `-----' `-------' `------'   `--'       `------'  
+    """)
 
-def print_slow(str):
-    """Prints a string slowly for effect."""
-    for char in str:
-        print(char, end='', flush=True)
-        time.sleep(0.05)
-    print()
+    print("Goodbye! You've reached Oregon successfully!")
 
-def travel():
-    global current_distance, health, food, pioneers
-    while current_distance < distance_to_travel and health > 0 and pioneers > 0:
-        print(ascii_art["camp"])
-        print_slow(f"You've traveled 20 miles. Total distance: {current_distance + 20}/{distance_to_travel} miles.")
-        current_distance += 20
-        food -= random.randint(5, 15)  # Decrease food supplies
-        print_slow(f"You have {food} food remaining.")
+def travel_event():
+    event = random.choice(['nothing', 'illness', 'hunting', 'fishing', 'foraging', 'resting'])
+    
+    if event == 'illness':
+        print("\nOne of your pioneers has fallen ill! Your health decreases by 12.")
+        return -12, 0  # Health loss, food gain
+    
+    elif event == 'hunting':
+        food_gain = random.randint(0, 50)
+        print(f"\nYou go hunting... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'fishing':
+        food_gain = random.randint(0, 30)
+        print(f"\nYou go fishing... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'foraging':
+        food_gain = random.randint(0, 20)
+        print(f"\nYou forage for food... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'resting':
+        health_gain = random.randint(5, 20)
+        print(f"\nYou rest and recover... You gain {health_gain} health!")
+        return health_gain, 0
+    
+    else:
+        print("\nNothing eventful happened.")
+        return 0, 0
+
+def oregon_trail():
+    display_ascii_intro()
+    
+    total_distance = 0
+    health = 100
+    food = 100
+    total_miles = 1000  # Updated distance to 1000 miles
+    
+    name = input("Enter your name: ")
+    print(f"Welcome, {name}! Your journey to Oregon begins now.\n")
+    
+    while total_distance < total_miles and health > 0 and food > 0:
+        # Display current status
+        print(f"\nYou've traveled {total_distance} miles. Total distance: {total_distance}/{total_miles} miles.")
+        print(f"You have {food} food remaining.")
+        print(f"Your health: {health}\n")
         
-        # Random events
-        event = random.choice(["nothing", "hunting", "sick"])
-        if event == "hunting":
-            hunt()
-        elif event == "sick":
-            get_sick()
-
-        # Check for food
-        if food <= 0:
-            print_slow("You have run out of food and your party is starving!")
-            pioneers -= random.randint(1, 3)  # Lose some pioneers
-            print_slow(f"Remaining pioneers: {pioneers}")
-
-        # Check health
+        # Travel 20 miles per iteration
+        total_distance += 20
+        food -= 10  # Subtract food as you travel
+        
+        # Random event
+        health_change, food_change = travel_event()
+        health += health_change
+        food += food_change
+        
         if health <= 0:
-            print_slow("Your party has succumbed to sickness!")
-            pioneers = 0
+            print("Your pioneers have died. Game Over.")
+            return
+        
+        if food <= 0:
+            print("You've run out of food. Game Over.")
+            return
+    
+    display_ascii_end()
 
-def hunt():
-    global food
-    print(ascii_art["hunting"])
-    print_slow("You go hunting...")
-    hunt_outcome = random.choice(["success", "failure"])
-    if hunt_outcome == "success":
-        food_gain = random.randint(10, 50)
-        food += food_gain
-        print_slow(f"You successfully hunted and gained {food_gain} food!")
-    else:
-        print_slow("You failed to catch any game.")
-
-def get_sick():
-    global health, pioneers
-    print(ascii_art["sick"])
-    print_slow("One of your pioneers has fallen ill!")
-    health_loss = random.randint(10, 30)
-    health -= health_loss
-    print_slow(f"Your health decreased by {health_loss}. Current health: {health}.")
-    if random.random() < 0.3:  # 30% chance to lose a pioneer
-        pioneers -= 1
-        print_slow("One of your pioneers has died from the illness.")
-        print_slow(f"Remaining pioneers: {pioneers}")
-
-def end_game():
-    if health <= 0 or pioneers <= 0:
-        print_slow("Your journey has come to an unfortunate end.")
-    else:
-        print_slow("Congratulations! You've reached Oregon!")
-    print(ascii_art["end"])
-
-def main():
-    global player_name
-    print(ascii_art["start"])
-    player_name = input("Enter your name: ")
-    print_slow(f"Welcome, {player_name}! Your journey to Oregon begins now.")
-    travel()
-    end_game()
-
-if __name__ == "__main__":
-    main()
+# Run the game
+oregon_trail()
