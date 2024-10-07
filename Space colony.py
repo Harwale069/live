@@ -1,99 +1,145 @@
 import random
 
-def display_ascii_intro():
-    print("""
-                ('-. .-.   ('-.                                  
-( OO )  / _(  OO)                                 
-,--. ,--.(,------.,--.      ,--.      .-'),-----. 
-|  | |  | |  .---'|  |.-')  |  |.-') ( OO'  .-.  '
-|   .|  | |  |    |  | OO ) |  | OO )/   |  | |  |
-|       |(|  '--. |  |`-' | |  |`-' |\_) |  |\|  |
-|  .-.  | |  .--'(|  '---.'(|  '---.'  \ |  | |  |
-|  | |  | |  `---.|      |  |      |    `'  '-'  '
-`--' `--' `------'`------'  `------'      `-----' 
-    """)
+# Introduction
+print('''
+  _____                         ____      _       _             
+ / ____|                       / __ \    | |     | |            
+| (___  _ __   __ _  ___ ___  | |  | | __| |_   _| | ___  ___   
+ \___ \| '_ \ / _` |/ __/ _ \ | |  | |/ _` | | | | |/ _ \/ __|  
+ ____) | |_) | (_| | (_|  __/ | |__| | (_| | |_| | |  __/\__ \  
+|_____/| .__/ \__,_|\___\___|  \____/ \__,_|\__,_|_|\___||___/  
+       | |                                                      
+       |_|                                                      
+''')
 
-def display_ascii_end():
-    print("""
-                                      _ .-') _ .-. .-')                 ('-.   
-                                     ( (  OO) )\  ( OO )              _(  OO)  
-  ,----.     .-'),-----.  .-'),-----. \     .'_ ;-----.\  ,--.   ,--.(,------. 
- '  .-./-') ( OO'  .-.  '( OO'  .-.  ',`'--..._)| .-.  |   \  `.'  /  |  .---' 
- |  |_( O- )/   |  | |  |/   |  | |  ||  |  \  '| '-' /_).-')     /   |  |     
- |  | .--, \\_) |  |\|  |\_) |  |\|  ||  |   ' || .-. `.(OO  \   /   (|  '--.  
-(|  | '. (_/  \ |  | |  |  \ |  | |  ||  |   / :| |  \  ||   /  /\_   |  .--'  
- |  '--'  |    `'  '-'  '   `'  '-'  '|  '--'  /| '--'  /`-./  /.__)  |  `---. 
-  `------'       `-----'      `-----' `-------' `------'   `--'       `------'  
-    """)
+print("Welcome to your new space colony! Manage your resources and make decisions to help your colony thrive.")
+print("Your goal is to survive 100 days and grow your colony as much as possible.\n")
 
-    print("Goodbye! You've reached Oregon successfully!")
+# Game variables
+days_survived = 0
+food = 100
+water = 100
+energy = 100
+population = 10
+morale = 100
 
-def travel_event():
-    event = random.choice(['nothing', 'illness', 'hunting', 'fishing', 'foraging', 'resting'])
-    
-    if event == 'illness':
-        print("\nOne of your pioneers has fallen ill! Your health decreases by 12.")
-        return -12, 0  # Health loss, food gain
-    
-    elif event == 'hunting':
-        food_gain = random.randint(0, 50)
-        print(f"\nYou go hunting... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'fishing':
-        food_gain = random.randint(0, 30)
-        print(f"\nYou go fishing... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'foraging':
-        food_gain = random.randint(0, 20)
-        print(f"\nYou forage for food... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'resting':
-        health_gain = random.randint(5, 20)
-        print(f"\nYou rest and recover... You gain {health_gain} health!")
-        return health_gain, 0
-    
+# Event functions
+def explore():
+    gain_food = random.randint(5, 20)
+    gain_water = random.randint(5, 20)
+    print(f"\nExploration successful! You gained {gain_food} food and {gain_water} water.")
+    return gain_food, gain_water
+
+def solar_storm():
+    loss_energy = random.randint(10, 30)
+    print(f"\nA solar storm hit! You lost {loss_energy} energy.")
+    return loss_energy
+
+def disease_outbreak():
+    loss_population = random.randint(1, 3)
+    morale_loss = random.randint(10, 20)
+    print(f"\nA disease outbreak occurred! You lost {loss_population} colonists and {morale_loss} morale.")
+    return loss_population, morale_loss
+
+def new_technology():
+    gain_energy = random.randint(20, 40)
+    morale_gain = random.randint(10, 20)
+    print(f"\nYour scientists discovered new technology! You gained {gain_energy} energy and {morale_gain} morale.")
+    return gain_energy, morale_gain
+
+# Main game loop
+while days_survived < 100 and population > 0 and food > 0 and water > 0 and energy > 0 and morale > 0:
+    print(f"\nDay {days_survived + 1}:\n")
+    print(f"Population: {population}")
+    print(f"Food: {food}")
+    print(f"Water: {water}")
+    print(f"Energy: {energy}")
+    print(f"Morale: {morale}\n")
+
+    # Daily player choice
+    print("Choose your action for the day:")
+    print("1. Explore for resources")
+    print("2. Work on energy production")
+    print("3. Rest and boost morale")
+    print("4. Expand your colony")
+
+    choice = input("Enter the number of your choice: ")
+
+    if choice == "1":
+        gain_food, gain_water = explore()
+        food += gain_food
+        water += gain_water
+
+    elif choice == "2":
+        gain_energy = random.randint(15, 30)
+        energy += gain_energy
+        print(f"\nYour colony worked on energy production. You gained {gain_energy} energy.")
+
+    elif choice == "3":
+        morale_boost = random.randint(10, 25)
+        morale += morale_boost
+        print(f"\nYour colony rested and recovered. You gained {morale_boost} morale.")
+
+    elif choice == "4":
+        if food >= 20 and water >= 20:
+            food -= 20
+            water -= 20
+            new_population = random.randint(1, 5)
+            population += new_population
+            print(f"\nYou expanded your colony! {new_population} new colonists joined.")
+        else:
+            print("\nNot enough resources to expand your colony. You need at least 20 food and 20 water.")
+
     else:
-        print("\nNothing eventful happened.")
-        return 0, 0
+        print("\nInvalid choice! Please enter a number between 1 and 4.")
 
-def oregon_trail():
-    display_ascii_intro()
+    # Random events
+    event = random.choice(["solar_storm", "disease_outbreak", "new_technology", "nothing"])
     
-    total_distance = 0
-    health = 100
-    food = 100
-    total_miles = 1000  # Updated distance to 1000 miles
-    
-    name = input("Enter your name: ")
-    print(f"Welcome, {name}! Your journey to Oregon begins now.\n")
-    
-    while total_distance < total_miles and health > 0 and food > 0:
-        # Display current status
-        print(f"\nYou've traveled {total_distance} miles. Total distance: {total_distance}/{total_miles} miles.")
-        print(f"You have {food} food remaining.")
-        print(f"Your health: {health}\n")
-        
-        # Travel 20 miles per iteration
-        total_distance += 20
-        food -= 10  # Subtract food as you travel
-        
-        # Random event
-        health_change, food_change = travel_event()
-        health += health_change
-        food += food_change
-        
-        if health <= 0:
-            print("Your pioneers have died. Game Over.")
-            return
-        
-        if food <= 0:
-            print("You've run out of food. Game Over.")
-            return
-    
-    display_ascii_end()
+    if event == "solar_storm":
+        energy_loss = solar_storm()
+        energy -= energy_loss
+    elif event == "disease_outbreak":
+        population_loss, morale_loss = disease_outbreak()
+        population -= population_loss
+        morale -= morale_loss
+    elif event == "new_technology":
+        energy_gain, morale_gain = new_technology()
+        energy += energy_gain
+        morale += morale_gain
+    else:
+        print("Nothing eventful happened today.")
 
-# Run the game
-oregon_trail()
+    # Resource consumption
+    food_consumed = population * 2
+    water_consumed = population * 2
+    food -= food_consumed
+    water -= water_consumed
+
+    print(f"\nYour colony consumed {food_consumed} food and {water_consumed} water today.")
+
+    days_survived += 1
+
+    # Check for game over conditions
+    if population <= 0:
+        print("\nYour colony has perished due to a lack of colonists. Game Over.")
+        break
+    if food <= 0:
+        print("\nYour colony has run out of food. Game Over.")
+        break
+    if water <= 0:
+        print("\nYour colony has run out of water. Game Over.")
+        break
+    if energy <= 0:
+        print("\nYour colony has run out of energy. Game Over.")
+        break
+    if morale <= 0:
+        print("\nYour colony's morale has dropped to zero. The colonists have abandoned the colony. Game Over.")
+        break
+
+# Win condition
+if days_survived >= 100:
+    print(f"\nCongratulations! You've successfully managed your space colony for {days_survived} days.")
+else:
+    print("\nUnfortunately, you couldn't make it to 100 days.")
+
