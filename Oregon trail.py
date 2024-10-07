@@ -1,99 +1,92 @@
 import random
 
-def display_ascii_intro():
-    print("""
-                ('-. .-.   ('-.                                  
-( OO )  / _(  OO)                                 
-,--. ,--.(,------.,--.      ,--.      .-'),-----. 
-|  | |  | |  .---'|  |.-')  |  |.-') ( OO'  .-.  '
-|   .|  | |  |    |  | OO ) |  | OO )/   |  | |  |
-|       |(|  '--. |  |`-' | |  |`-' |\_) |  |\|  |
-|  .-.  | |  .--'(|  '---.'(|  '---.'  \ |  | |  |
-|  | |  | |  `---.|      |  |      |    `'  '-'  '
-`--' `--' `------'`------'  `------'      `-----' 
-    """)
+# Game setup
+print('''
+  ('-. .-.   ('-.                                  
+ ( OO )  / _(  OO)                                 
+ ,--. ,--.(,------.,--.      ,--.      .-'),-----. 
+ |  | |  | |  .---'|  |.-')  |  |.-') ( OO'  .-.  '
+ |   .|  | |  |    |  | OO ) |  | OO )/   |  | |  |
+ |       |(|  '--. |  |`-' | |  |`-' |\_) |  |\|  |
+ |  .-.  | |  .--'(|  '---.'(|  '---.'  \ |  | |  |
+ |  | |  | |  `---.|      |  |      |    `'  '-'  '
+ `--' `--' `------'`------'  `------'      `-----' 
+''')
 
-def display_ascii_end():
-    print("""
-                                      _ .-') _ .-. .-')                 ('-.   
-                                     ( (  OO) )\  ( OO )              _(  OO)  
-  ,----.     .-'),-----.  .-'),-----. \     .'_ ;-----.\  ,--.   ,--.(,------. 
- '  .-./-') ( OO'  .-.  '( OO'  .-.  ',`'--..._)| .-.  |   \  `.'  /  |  .---' 
- |  |_( O- )/   |  | |  |/   |  | |  ||  |  \  '| '-' /_).-')     /   |  |     
- |  | .--, \\_) |  |\|  |\_) |  |\|  ||  |   ' || .-. `.(OO  \   /   (|  '--.  
-(|  | '. (_/  \ |  | |  |  \ |  | |  ||  |   / :| |  \  ||   /  /\_   |  .--'  
- |  '--'  |    `'  '-'  '   `'  '-'  '|  '--'  /| '--'  /`-./  /.__)  |  `---. 
-  `------'       `-----'      `-----' `-------' `------'   `--'       `------'  
-    """)
+name = input("Enter your name: ")
+print(f"Welcome, {name}! Your journey to Oregon begins now.")
 
-    print("Goodbye! You've reached Oregon successfully!")
+# Game variables
+distance = 1000
+travelled = 0
+food = 100
+health = 100
 
-def travel_event():
-    event = random.choice(['nothing', 'illness', 'hunting', 'fishing', 'foraging', 'resting'])
+# Game loop
+while travelled < distance and food > 0:
+    print(f"\nYou've traveled {travelled} miles. Total distance: {travelled}/{distance} miles.")
+    print(f"You have {food} food remaining.")
+    print(f"Your health: {health}")
+
+    # Give the player choices
+    print("\nChoose your action:")
+    print("1. Continue traveling")
+    print("2. Rest")
+    print("3. Go hunting")
+    print("4. Go fishing")
+
+    choice = input("Enter the number of your choice: ")
+
+    if choice == "1":
+        # Continue traveling
+        travelled += random.randint(15, 30)
+        food -= 10
+
+        # Random events
+        event = random.choice(["illness", "nothing", "recovery"])
+        if event == "illness":
+            health -= random.randint(10, 20)
+            print("\nOne of your pioneers has fallen ill! Your health decreases.")
+        elif event == "nothing":
+            print("\nNothing eventful happened.")
+        elif event == "recovery":
+            health += random.randint(5, 15)
+            print("\nYou rest and recover... You gain some health!")
+
+    elif choice == "2":
+        # Resting
+        health += random.randint(5, 15)
+        food -= 10
+        print("\nYou rest and recover... You gain health but consume food.")
     
-    if event == 'illness':
-        print("\nOne of your pioneers has fallen ill! Your health decreases by 12.")
-        return -12, 0  # Health loss, food gain
+    elif choice == "3":
+        # Hunting
+        gain = random.randint(5, 20)
+        food += gain
+        print(f"\nYou go hunting... You gained {gain} food!")
     
-    elif event == 'hunting':
-        food_gain = random.randint(0, 50)
-        print(f"\nYou go hunting... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'fishing':
-        food_gain = random.randint(0, 30)
-        print(f"\nYou go fishing... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'foraging':
-        food_gain = random.randint(0, 20)
-        print(f"\nYou forage for food... You gained {food_gain} food!")
-        return 0, food_gain
-    
-    elif event == 'resting':
-        health_gain = random.randint(5, 20)
-        print(f"\nYou rest and recover... You gain {health_gain} health!")
-        return health_gain, 0
+    elif choice == "4":
+        # Fishing
+        gain = random.randint(3, 10)
+        food += gain
+        print(f"\nYou go fishing... You gained {gain} food!")
     
     else:
-        print("\nNothing eventful happened.")
-        return 0, 0
+        print("\nInvalid choice! Please enter a number between 1 and 4.")
 
-def oregon_trail():
-    display_ascii_intro()
-    
-    total_distance = 0
-    health = 100
-    food = 100
-    total_miles = 1000  # Updated distance to 1000 miles
-    
-    name = input("Enter your name: ")
-    print(f"Welcome, {name}! Your journey to Oregon begins now.\n")
-    
-    while total_distance < total_miles and health > 0 and food > 0:
-        # Display current status
-        print(f"\nYou've traveled {total_distance} miles. Total distance: {total_distance}/{total_miles} miles.")
-        print(f"You have {food} food remaining.")
-        print(f"Your health: {health}\n")
-        
-        # Travel 20 miles per iteration
-        total_distance += 20
-        food -= 10  # Subtract food as you travel
-        
-        # Random event
-        health_change, food_change = travel_event()
-        health += health_change
-        food += food_change
-        
-        if health <= 0:
-            print("Your pioneers have died. Game Over.")
-            return
-        
-        if food <= 0:
-            print("You've run out of food. Game Over.")
-            return
-    
-    display_ascii_end()
+    # Check health and food
+    if health <= 0:
+        print("\nYour health has dropped to 0. Game Over.")
+        break
+    if food <= 0:
+        print("\nYou've run out of food. Game Over.")
+        break
 
-# Run the game
-oregon_trail()
+# Game over messages
+if travelled >= distance:
+    print(f"\nCongratulations, {name}! You've successfully made it to Oregon!")
+elif food <= 0:
+    print("\nYou've run out of food and couldn't make it to Oregon.")
+else:
+    print("\nYou couldn't make it to Oregon.")
+
