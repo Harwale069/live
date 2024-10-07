@@ -3,153 +3,118 @@ import time
 import sys
 
 # Game variables
-player_name = ""
-miles_traveled = 0
-total_miles = 1000
+name = ""
+profession = ""
 food = 100
 health = 100
-days_passed = 0
-money = 100
-inventory = {}
+money = 0
 wagon_parts = 0
-pace = "normal"  # Can be "slow", "normal", or "fast"
-towns = ["Independence", "Fort Kearny", "Chimney Rock", "Fort Laramie", "South Pass", "Soda Springs", "Fort Boise", "Oregon City"]
-events = ["illness", "nothing", "rest", "hunting", "fishing", "wagon_breakdown"]
-event_chances = {"banker": 0.3, "farmer": 0.1, "hunter": 0.2}  # Chance of bad events by profession
+miles_traveled = 0
+days_passed = 0
+total_miles = 1000
+event_chances = {"banker": 0.3, "farmer": 0.1, "hunter": 0.2}
+inventory = {"food": 0, "health kit": 0, "gun": 0, "animal": 0}  # Add inventory for items
 
-# Helper functions
-def typewriter(text, delay=0.05):
+# Events
+events = ["illness", "rest", "hunting", "fishing", "wagon_breakdown"]
+
+# Function for typewriter effect
+def typewriter(text, speed=0.05):
     for char in text:
         sys.stdout.write(char)
         sys.stdout.flush()
-        time.sleep(delay)
-    print()  # New line after the text
+        time.sleep(speed)
+    input("\n(Press Enter to continue)")
 
-def display_stats():
-    print("=" * 60)
-    print(f"| Name: {player_name} | Miles Traveled: {miles_traveled}/{total_miles} |")
-    print(f"| Food: {food} | Health: {health} | Money: {money} | Days Passed: {days_passed} |")
-    print(f"| Wagon Parts: {wagon_parts} | Pace: {pace.capitalize()} |")
-    print("=" * 60)
-
-def display_horizontally():
-    progress = miles_traveled / total_miles * 100
-    bar_length = 50
-    filled_length = int(bar_length * progress // 100)
-    bar = '█' * filled_length + '-' * (bar_length - filled_length)
-    print(f"{bar}📍 {'Oregon'}")
-    print(" ")
-
-# Event functions
-def illness_event():
-    global health
-    illness_damage = random.randint(10, 20)
-    health -= illness_damage
-    typewriter(f"\n🚑 Oh no! One of your pioneers has fallen ill! Health decreases by {illness_damage}.")
-
-def rest_event():
-    global health
-    rest_gain = random.randint(5, 15)
-    health += rest_gain
-    typewriter(f"\n😴 You rested and recovered. You gain {rest_gain} health.")
-
-def hunting_event():
-    global food
-    food_gain = random.randint(5, 20)
-    food += food_gain
-    typewriter(f"\n🏹 You went hunting and gained {food_gain} food.")
-
-def fishing_event():
-    global food
-    food_gain = random.randint(5, 15)
-    food += food_gain
-    typewriter(f"\n🎣 You went fishing and gained {food_gain} food.")
-
-def nothing_event():
-    typewriter("\n😐 Nothing eventful happened today.")
-
-def wagon_breakdown_event():
-    global wagon_parts, money
-    if wagon_parts > 0:
-        wagon_parts -= 1
-        typewriter("\n🚧 Your wagon broke down! You used one wagon part to repair it.")
-    else:
-        typewriter("\n💔 Your wagon broke down! You're stranded and have no parts to repair it. Game Over.")
-
-# Shopping Phase
-def shopping_phase():
-    global food, health, money, wagon_parts
-    typewriter("\nBefore you leave, you can buy supplies.")
-    
-    shops = {
-        "Food Store": {"food": 10, "price": 10},
-        "Medicine Shop": {"health": 20, "price": 20},
-        "Gunsmith": {"gun": 50, "price": 50},
-        "Animal Dealer": {"animal": 100, "price": 100},
-        "Wagon Parts Store": {"wagon_part": 30, "price": 30}
-    }
-
-    while True:
-        typewriter("\nCurrent supplies:")
-        display_stats()
-        typewriter("What would you like to buy? (Enter 'exit' to leave)")
-
-        for shop in shops:
-            item = shops[shop]
-            typewriter(f"{shop}: {item.keys()} for {item['price']} coins")
-
-        choice = input("Enter your choice (or type the shop name): ").strip().lower()
-        
-        if choice == "exit":
-            break
-        
-        for shop, item in shops.items():
-            if choice in item.keys():
-                if money >= item["price"]:
-                    money -= item["price"]
-                    inventory[choice] = inventory.get(choice, 0) + 1
-                    if choice == "wagon_part":
-                        wagon_parts += 1
-                    typewriter(f"You bought a {choice}!")
-                else:
-                    typewriter("You don't have enough money.")
-                break
-        else:
-            typewriter("Invalid choice, please try again.")
-
-# Profession Selection
+# Profession selection
 def profession_selection():
     global money
-    typewriter("\nChoose your profession:")
-    typewriter("1. Banker (Starts with $300, higher chance of bad events)")
-    typewriter("2. Farmer (Starts with $100, lower chance of bad events)")
-    typewriter("3. Hunter (Starts with $200, balanced skills)")
+    typewriter("Choose your profession:\n1. Banker (Starts with $300, higher chance of bad events)\n2. Farmer (Starts with $100, lower chance of bad events)\n3. Hunter (Starts with $200, balanced skills)")
     
     choice = input("Enter your choice (1, 2, or 3): ")
     
     if choice == "1":
-        money += 300
+        global profession
+        profession = "banker"
+        money = 300
         typewriter("You chose Banker! You start with $300!")
-        return "banker"
     elif choice == "2":
+        profession = "farmer"
+        money = 100
         typewriter("You chose Farmer! You start with $100!")
-        return "farmer"
     elif choice == "3":
-        money += 200
+        profession = "hunter"
+        money = 200
         typewriter("You chose Hunter! You start with $200!")
-        return "hunter"
     else:
         typewriter("Invalid choice, defaulting to Farmer.")
-        return "farmer"
+        profession = "farmer"
+        money = 100
+
+# Shopping phase
+def shopping_phase():
+    global money
+    typewriter("Before you leave, you can buy supplies.")
+    
+    # Store items and prices
+    store_items = {
+        "Food Store": {"food": 10},
+        "Medicine Shop": {"health kit": 20},
+        "Gunsmith": {"gun": 50},
+        "Animal Dealer": {"animal": 100},
+        "Wagon Parts Store": {"wagon part": 30}
+    }
+    
+    while True:
+        print("Current supplies:")
+        print("============================================================")
+        print(f"| Name: {name} | Miles Traveled: {miles_traveled}/1000 |")
+        print(f"| Food: {food} | Health: {health} | Money: {money} | Days Passed: {days_passed} |")
+        print(f"| Wagon Parts: {wagon_parts} | Pace: Normal |")
+        print("============================================================")
+        print("What would you like to buy? (Enter 'exit' to leave)")
+        
+        for store, items in store_items.items():
+            for item, price in items.items():
+                print(f"{store}: {item.title()} for {price} coins")
+
+        choice = input("Enter your choice (or type the store name): ").lower()
+        
+        if choice == "exit":
+            break
+            
+        found_item = False
+        
+        for store, items in store_items.items():
+            if choice in store.lower():
+                found_item = True
+                item_name, price = list(items.items())[0]  # Get first item in store
+                quantity = input(f"How many {item_name}s would you like to buy? (Cost: {price} each): ")
+                
+                try:
+                    quantity = int(quantity)
+                    total_cost = quantity * price
+                    
+                    if money >= total_cost:
+                        money -= total_cost
+                        inventory[item_name] += quantity
+                        typewriter(f"You bought {quantity} {item_name}(s)!")
+                    else:
+                        typewriter("Not enough money!")
+                except ValueError:
+                    typewriter("Please enter a valid number.")
+        
+        if not found_item:
+            typewriter("Invalid store choice, please try again.")
 
 # Travel Phase
-def travel_phase(profession):
+def travel_phase():
     global miles_traveled, food, health, days_passed, wagon_parts
     travel_distance = random.randint(15, 30)  # Random distance traveled
     miles_traveled += travel_distance
     food -= random.randint(5, 15)  # Food consumed
     days_passed += 1
-
+    
     # Determine if an event occurs based on profession
     if random.random() < event_chances[profession]:
         event = random.choice(events)
@@ -174,10 +139,11 @@ def travel_phase(profession):
 # Main game loop
 def play_game():
     global miles_traveled, food, health, days_passed, player_name
-
+    
     player_name = input("Enter your name: ")
     
     if player_name.lower() == "debug224":
+        global food, health, money, wagon_parts
         food = float("inf")
         health = float("inf")
         money = float("inf")
@@ -185,33 +151,55 @@ def play_game():
         wagon_parts = float("inf")
         typewriter("Debug mode activated: Infinite resources!")
     else:
-        profession = profession_selection()  # Select profession before shopping
+        profession_selection()  # Select profession before shopping
         shopping_phase()  # Call shopping phase before starting the journey
-
+            
     while miles_traveled < total_miles and health > 0 and food > 0:
-        # Display stats and horizontal progress
-        display_horizontally()
+        # Display stats
         display_stats()
-
+                
         # Travel phase
-        travel_phase(profession)
-        time.sleep(1)  # Simulate the passage of time for effect
+        travel_phase()
 
-        # Check for game over conditions
-        if health <= 0:
-            typewriter("\n💀 Your health has dropped to zero. Game Over.")
-            break
-        if food <= 0:
-            typewriter("\n🍽️ You've run out of food. Game Over.")
-            break
-        if wagon_parts <= 0 and miles_traveled < total_miles:
-            typewriter("\n🚧 You cannot continue without wagon parts! Game Over.")
+    typewriter("Game over! Thanks for playing.")
 
-    # End of game
-    if miles_traveled >= total_miles:
-        typewriter(f"\n🏁 Congratulations, {player_name}! You've made it to Oregon!")
-    else:
-        typewriter(f"\nYou traveled {miles_traveled} miles but did not make it to Oregon.")
+# Display current stats
+def display_stats():
+    print("============================================================")
+    print(f"| Name: {name} | Miles Traveled: {miles_traveled}/1000 |")
+    print(f"| Food: {food} | Health: {health} | Money: {money} | Days Passed: {days_passed} |")
+    print(f"| Wagon Parts: {wagon_parts} | Pace: Normal |")
+    print("============================================================")
+
+# Events Placeholder Functions
+def illness_event():
+    global health
+    health -= random.randint(10, 30)
+    typewriter("Oh no! You got sick!")
+
+def rest_event():
+    global health
+    health += 10
+    typewriter("You took a rest and recovered some health.")
+
+def hunting_event():
+    global food
+    food += random.randint(5, 20)
+    typewriter("You went hunting and brought back some food.")
+
+def fishing_event():
+    global food
+    food += random.randint(5, 20)
+    typewriter("You fished successfully and caught some food.")
+
+def wagon_breakdown_event():
+    global wagon_parts
+    wagon_parts += 1
+    typewriter("Your wagon broke down! You found a wagon part.")
+
+def nothing_event():
+    typewriter("Nothing happened on your journey.")
 
 # Start the game
-play_game()
+if __name__ == "__main__":
+    play_game()
