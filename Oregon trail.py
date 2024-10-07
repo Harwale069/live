@@ -15,6 +15,7 @@ wagon_parts = 0
 pace = "normal"  # Can be "slow", "normal", or "fast"
 towns = ["Independence", "Fort Kearny", "Chimney Rock", "Fort Laramie", "South Pass", "Soda Springs", "Fort Boise", "Oregon City"]
 events = ["illness", "nothing", "rest", "hunting", "fishing", "wagon_breakdown"]
+event_chances = {"banker": 0.3, "farmer": 0.1, "hunter": 0.2}  # Chance of bad events by profession
 
 # Helper functions
 def typewriter(text, delay=0.05):
@@ -120,45 +121,53 @@ def shopping_phase():
 def profession_selection():
     global money
     typewriter("\nChoose your profession:")
-    typewriter("1. Banker (Starts with $200)")
-    typewriter("2. Farmer (Starts with $100)")
-    typewriter("3. Hunter (Starts with $100)")
+    typewriter("1. Banker (Starts with $300, higher chance of bad events)")
+    typewriter("2. Farmer (Starts with $100, lower chance of bad events)")
+    typewriter("3. Hunter (Starts with $200, balanced skills)")
     
     choice = input("Enter your choice (1, 2, or 3): ")
     
     if choice == "1":
-        money += 100
-        typewriter("You chose Banker! You start with $200!")
+        money += 300
+        typewriter("You chose Banker! You start with $300!")
+        return "banker"
     elif choice == "2":
         typewriter("You chose Farmer! You start with $100!")
+        return "farmer"
     elif choice == "3":
-        typewriter("You chose Hunter! You start with $100!")
+        money += 200
+        typewriter("You chose Hunter! You start with $200!")
+        return "hunter"
     else:
         typewriter("Invalid choice, defaulting to Farmer.")
+        return "farmer"
 
 # Travel Phase
-def travel_phase():
+def travel_phase(profession):
     global miles_traveled, food, health, days_passed, wagon_parts
     travel_distance = random.randint(15, 30)  # Random distance traveled
     miles_traveled += travel_distance
     food -= random.randint(5, 15)  # Food consumed
     days_passed += 1
 
-    # Random events
-    event = random.choice(events)
-    if event == "illness":
-        illness_event()
-    elif event == "rest":
-        rest_event()
-    elif event == "hunting":
-        hunting_event()
-    elif event == "fishing":
-        if miles_traveled % 100 < 30:  # Simulating being near a river
-            fishing_event()
+    # Determine if an event occurs based on profession
+    if random.random() < event_chances[profession]:
+        event = random.choice(events)
+        if event == "illness":
+            illness_event()
+        elif event == "rest":
+            rest_event()
+        elif event == "hunting":
+            hunting_event()
+        elif event == "fishing":
+            if miles_traveled % 100 < 30:  # Simulating being near a river
+                fishing_event()
+            else:
+                typewriter("\n🌊 You were not near a river to fish.")
+        elif event == "wagon_breakdown":
+            wagon_breakdown_event()
         else:
-            typewriter("\n🌊 You were not near a river to fish.")
-    elif event == "wagon_breakdown":
-        wagon_breakdown_event()
+            nothing_event()
     else:
         nothing_event()
 
@@ -176,7 +185,7 @@ def play_game():
         wagon_parts = float("inf")
         typewriter("Debug mode activated: Infinite resources!")
     else:
-        profession_selection()  # Select profession before shopping
+        profession = profession_selection()  # Select profession before shopping
         shopping_phase()  # Call shopping phase before starting the journey
 
     while miles_traveled < total_miles and health > 0 and food > 0:
@@ -185,7 +194,7 @@ def play_game():
         display_stats()
 
         # Travel phase
-        travel_phase()
+        travel_phase(profession)
         time.sleep(1)  # Simulate the passage of time for effect
 
         # Check for game over conditions
