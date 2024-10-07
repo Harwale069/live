@@ -1,86 +1,99 @@
 import random
 
-class SpaceColony:
-    def __init__(self):
-        self.population = 100
-        self.resources = 200
-        self.happiness = 75
-        self.turn = 1
+def display_ascii_intro():
+    print("""
+                ('-. .-.   ('-.                                  
+( OO )  / _(  OO)                                 
+,--. ,--.(,------.,--.      ,--.      .-'),-----. 
+|  | |  | |  .---'|  |.-')  |  |.-') ( OO'  .-.  '
+|   .|  | |  |    |  | OO ) |  | OO )/   |  | |  |
+|       |(|  '--. |  |`-' | |  |`-' |\_) |  |\|  |
+|  .-.  | |  .--'(|  '---.'(|  '---.'  \ |  | |  |
+|  | |  | |  `---.|      |  |      |    `'  '-'  '
+`--' `--' `------'`------'  `------'      `-----' 
+    """)
 
-    def print_status(self):
-        print(f"Turn: {self.turn}")
-        print(f"Population: {self.population}")
-        print(f"Resources: {self.resources}")
-        print(f"Happiness: {self.happiness}\n")
+def display_ascii_end():
+    print("""
+                                      _ .-') _ .-. .-')                 ('-.   
+                                     ( (  OO) )\  ( OO )              _(  OO)  
+  ,----.     .-'),-----.  .-'),-----. \     .'_ ;-----.\  ,--.   ,--.(,------. 
+ '  .-./-') ( OO'  .-.  '( OO'  .-.  ',`'--..._)| .-.  |   \  `.'  /  |  .---' 
+ |  |_( O- )/   |  | |  |/   |  | |  ||  |  \  '| '-' /_).-')     /   |  |     
+ |  | .--, \\_) |  |\|  |\_) |  |\|  ||  |   ' || .-. `.(OO  \   /   (|  '--.  
+(|  | '. (_/  \ |  | |  |  \ |  | |  ||  |   / :| |  \  ||   /  /\_   |  .--'  
+ |  '--'  |    `'  '-'  '   `'  '-'  '|  '--'  /| '--'  /`-./  /.__)  |  `---. 
+  `------'       `-----'      `-----' `-------' `------'   `--'       `------'  
+    """)
 
-    def make_decision(self):
-        print("Choose an action:")
-        print("1. Build new housing (+10 population, -20 resources)")
-        print("2. Explore new land (+30 resources, -10 happiness)")
-        print("3. Organize a festival (+20 happiness, -10 resources)")
-        print("4. Skip turn")
+    print("Goodbye! You've reached Oregon successfully!")
 
-        choice = input("Enter the number of your choice: ")
-        if choice == '1':
-            self.build_housing()
-        elif choice == '2':
-            self.explore_land()
-        elif choice == '3':
-            self.organize_festival()
-        elif choice == '4':
-            print("You skipped your turn.\n")
-        else:
-            print("Invalid choice! Turn skipped.\n")
-
-    def build_housing(self):
-        if self.resources >= 20:
-            self.population += 10
-            self.resources -= 20
-            print("You built new housing! +10 population, -20 resources.\n")
-        else:
-            print("Not enough resources to build housing.\n")
-
-    def explore_land(self):
-        self.resources += 30
-        self.happiness -= 10
-        print("You explored new land! +30 resources, -10 happiness.\n")
-
-    def organize_festival(self):
-        if self.resources >= 10:
-            self.happiness += 20
-            self.resources -= 10
-            print("You organized a festival! +20 happiness, -10 resources.\n")
-        else:
-            print("Not enough resources to organize a festival.\n")
-
-    def next_turn(self):
-        self.turn += 1
-        self.population += random.randint(-5, 5)  # Random event affecting population
-        self.resources -= random.randint(5, 15)   # Random event affecting resources
-        self.happiness += random.randint(-5, 5)   # Random event affecting happiness
-
-        # Check for win/lose conditions
-        if self.population <= 0:
-            print("Your colony population has died out. Game Over.")
-            return False
-        if self.resources <= 0:
-            print("Your colony has run out of resources. Game Over.")
-            return False
-        if self.happiness <= 0:
-            print("Your colony's happiness has dropped too low. Game Over.")
-            return False
-
-        return True
-
-def run_game():
-    colony = SpaceColony()
+def travel_event():
+    event = random.choice(['nothing', 'illness', 'hunting', 'fishing', 'foraging', 'resting'])
     
-    while True:
-        colony.print_status()
-        colony.make_decision()
-        if not colony.next_turn():
-            break
-    print("Thanks for playing the Space Colony Simulator!")
+    if event == 'illness':
+        print("\nOne of your pioneers has fallen ill! Your health decreases by 12.")
+        return -12, 0  # Health loss, food gain
+    
+    elif event == 'hunting':
+        food_gain = random.randint(0, 50)
+        print(f"\nYou go hunting... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'fishing':
+        food_gain = random.randint(0, 30)
+        print(f"\nYou go fishing... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'foraging':
+        food_gain = random.randint(0, 20)
+        print(f"\nYou forage for food... You gained {food_gain} food!")
+        return 0, food_gain
+    
+    elif event == 'resting':
+        health_gain = random.randint(5, 20)
+        print(f"\nYou rest and recover... You gain {health_gain} health!")
+        return health_gain, 0
+    
+    else:
+        print("\nNothing eventful happened.")
+        return 0, 0
 
-if __name__ == "__main__":
-    run_game()
+def oregon_trail():
+    display_ascii_intro()
+    
+    total_distance = 0
+    health = 100
+    food = 100
+    total_miles = 1000  # Updated distance to 1000 miles
+    
+    name = input("Enter your name: ")
+    print(f"Welcome, {name}! Your journey to Oregon begins now.\n")
+    
+    while total_distance < total_miles and health > 0 and food > 0:
+        # Display current status
+        print(f"\nYou've traveled {total_distance} miles. Total distance: {total_distance}/{total_miles} miles.")
+        print(f"You have {food} food remaining.")
+        print(f"Your health: {health}\n")
+        
+        # Travel 20 miles per iteration
+        total_distance += 20
+        food -= 10  # Subtract food as you travel
+        
+        # Random event
+        health_change, food_change = travel_event()
+        health += health_change
+        food += food_change
+        
+        if health <= 0:
+            print("Your pioneers have died. Game Over.")
+            return
+        
+        if food <= 0:
+            print("You've run out of food. Game Over.")
+            return
+    
+    display_ascii_end()
+
+# Run the game
+oregon_trail()
