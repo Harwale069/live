@@ -2,19 +2,19 @@ import random
 
 # Constants for professions
 INITIAL_MONEY = {
-    "Banker": 36000,
-    "Hunter": 24000,
-    "Farmer": 12000
+    "Banker": 3600,
+    "Hunter": 2400,
+    "Farmer": 1200
 }
 
 ITEM_PRICES = {
-    "Food": 500,
-    "Medicine": 1000,
-    "Gun": 2500,
-    "Animal": 5000,
-    "Wagon Part": 1500,
-    "Water": 300,
-    "Clothes": 400
+    "Food": 100,
+    "Medicine": 50,
+    "Gun": 250,
+    "Animal": 500,
+    "Wagon Part": 150,
+    "Water": 30,
+    "Clothes": 40
 }
 
 MAX_HEALTH = 100
@@ -24,7 +24,7 @@ DISTANCE_GOAL = 1000
 player_name = ""
 player_profession = ""
 money = 0
-food = 100
+food = 0
 health = MAX_HEALTH
 miles_traveled = 0
 wagon_parts = 0
@@ -33,11 +33,19 @@ animals = 0
 guns = 0
 medicine = 0
 clothes = 0
-water = 100
+water = 0
+
+# Theme Settings
+themes = {
+    "light": {"bg": "\033[0m", "fg": "\033[97m"},
+    "dark": {"bg": "\033[40m", "fg": "\033[37m"},
+}
+
+current_theme = themes["light"]
 
 # Game functions
 def display_intro():
-    print("Welcome to the Oregon Trail!")
+    print(current_theme["fg"] + "Welcome to the Oregon Trail!" + current_theme["bg"])
     print("Your goal is to travel 1000 miles to the west.")
     print("Survive harsh conditions, manage your resources, and reach your destination.\n")
 
@@ -45,9 +53,9 @@ def choose_profession():
     global player_profession, money
     while True:
         print("Choose your profession:")
-        print("1. Banker (Starts with $36,000, more money but higher risk of theft)")
-        print("2. Hunter (Starts with $24,000, balanced money and survival skills)")
-        print("3. Farmer (Starts with $12,000, least money but lower chance of bad events)")
+        print("1. Banker (Starts with $3,600, more money but higher risk of theft)")
+        print("2. Hunter (Starts with $2,400, balanced money and survival skills)")
+        print("3. Farmer (Starts with $1,200, least money but lower chance of bad events)")
 
         choice = input("Enter your choice (1, 2, or 3): ")
         if choice == '1':
@@ -152,8 +160,9 @@ def random_event():
             print("No animals to lose.")
     elif event_type == "clothing_damage":
         if clothes > 0:
-            clothes -= random.randint(1, 5)
-            print("Some of your clothes were damaged! You lost a few clothing items.")
+            lost_clothes = random.randint(1, 3)
+            clothes -= lost_clothes
+            print(f"Some of your clothes were damaged! You lost {lost_clothes} clothing items.")
         else:
             print("No clothes to lose.")
     elif event_type == "theft":
@@ -166,38 +175,27 @@ def random_event():
 
 def travel():
     global miles_traveled, days_passed, health, food, water
-    while miles_traveled < DISTANCE_GOAL and health > 0:
-        print("\nTraveling...")
-        travel_distance = random.randint(20, 50)  # Travel between 20 and 50 miles
-        miles_traveled += travel_distance
-        days_passed += random.randint(1, 3)  # Days passed during travel
-        food -= random.randint(5, 15)  # Consume food
-        water -= random.randint(5, 15)  # Consume water
-        health -= random.randint(0, 5)  # Random health loss
-        if health < 0:
-            health = 0
-        if food < 0:
-            food = 0
-        if water < 0:
-            water = 0
+    print("\nTraveling...")
+    travel_distance = random.randint(20, 50)  # Travel between 20 and 50 miles
+    miles_traveled += travel_distance
+    days_passed += random.randint(1, 3)  # Days passed during travel
+    food -= random.randint(5, 15)  # Consume food
+    water -= random.randint(5, 15)  # Consume water
+    health -= random.randint(0, 5)  # Random health loss
+    if health < 0:
+        health = 0
+    if food < 0:
+        food = 0
+    if water < 0:
+        water = 0
 
-        random_event()  # Random events during travel
-
-        display_status()
-
-        if miles_traveled >= DISTANCE_GOAL:
-            print("\nCongratulations! You have reached Oregon!")
-            break
-        elif health <= 0:
-            print("\nYour health has dropped to zero. You have failed to reach Oregon.")
-            break
+    random_event()  # Random events during travel
 
 def manage_inventory():
     print("\n--- Inventory Management ---")
     print(f"Food: {food} | Water: {water} | Clothes: {clothes}")
     print(f"Guns: {guns} | Medicine: {medicine} | Animals: {animals}")
     print(f"Wagon Parts: {wagon_parts}")
-    print("You can trade or reorganize items during rest stops.")
 
 def rest_phase():
     global health, days_passed
@@ -209,26 +207,47 @@ def rest_phase():
         health = MAX_HEALTH
     print(f"\nYou rested for {days_rest} days and gained {health_gain} health.")
 
-def main():
-    display_intro()
+def theme_selector():
+    global current_theme
+    print("\nSelect a theme for the game:")
+    print("1. Light")
+    print("2. Dark")
+    choice = input("Enter your choice (1 or 2): ")
+    if choice == '1':
+        current_theme = themes["light"]
+    elif choice == '2':
+        current_theme = themes["dark"]
+    else:
+        print("Invalid choice. Defaulting to Light theme.")
+
+def play_game():
     global player_name
     player_name = input("Enter your name: ")
-
     choose_profession()
     shopping_phase()
+    theme_selector()
 
-    # Main game loop
     while miles_traveled < DISTANCE_GOAL and health > 0:
-        travel()
-        if miles_traveled < DISTANCE_GOAL and health > 0:
-            print("\nYou have reached a rest stop!")
-            print("Would you like to rest (gain health) or continue?")
-            choice = input("Enter 'rest' or 'continue': ").lower()
-            if choice == 'rest':
-                rest_phase()
+        display_status()
+        action = input("\nWhat would you like to do? (travel, rest, inventory, quit): ").lower()
+        if action == "travel":
+            travel()
+        elif action == "rest":
+            rest_phase()
+        elif action == "inventory":
             manage_inventory()
+        elif action == "quit":
+            print("Thanks for playing!")
+            break
+        else:
+            print("Invalid action. Please try again.")
 
-    print("\nThank you for playing the Oregon Trail!")
+    if miles_traveled >= DISTANCE_GOAL:
+        print(f"Congratulations, {player_name}! You made it to your destination in {days_passed} days!")
+    elif health <= 0:
+        print("You have perished on the trail. Game Over.")
 
+# Main game loop
 if __name__ == "__main__":
-    main()
+    display_intro()
+    play_game()
