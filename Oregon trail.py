@@ -1,253 +1,393 @@
 import random
+import time
 
-# Constants for professions
-INITIAL_MONEY = {
-    "Banker": 3600,
-    "Hunter": 2400,
-    "Farmer": 1200
-}
+# Constants
+DISTANCE_GOAL = 1000  # Total distance to travel (miles)
+START_HEALTH = 100
+START_FOOD = 50
+START_WATER = 40
+START_MONEY = 100
+START_STAMINA = 100
+START_MORALE = 75
+FOOD_PER_TRAVEL = 10
+WATER_PER_TRAVEL = 5
+STAMINA_PER_TRAVEL = 10
+MORALE_LOSS_TRAVEL = 5
+EVENT_COUNTDOWN = 3  # Days until another event occurs
 
-ITEM_PRICES = {
-    "Food": 100,
-    "Medicine": 50,
-    "Gun": 250,
-    "Animal": 500,
-    "Wagon Part": 150,
-    "Water": 30,
-    "Clothes": 40
-}
+# Events and locations
+EVENTS = [
+    "You encounter a wild animal!",
+    "A storm is approaching.",
+    "You meet a stranger who offers you food.",
+    "You find a river to rest by.",
+    "A band of hostile travelers attacks you!",
+    "You find an abandoned cabin.",
+    "You discover a hidden stash of supplies.",
+    "You stumble upon a lost traveler who needs help.",
+    "You experience a miraculous turn of luck!",
+    "A local merchant offers rare goods."
+]
 
-MAX_HEALTH = 100
-DISTANCE_GOAL = 1000
+TERRAINS = ["Desert", "Forest", "Mountains", "Plains", "River"]
+WEATHERS = ["Sunny", "Rainy", "Snowy", "Windy"]
 
 # Player stats
 player_name = ""
-player_profession = ""
-money = 0
-food = 0
-health = MAX_HEALTH
+health = START_HEALTH
+food = START_FOOD
+water = START_WATER
+stamina = START_STAMINA
+morale = START_MORALE
+money = START_MONEY
 miles_traveled = 0
-wagon_parts = 0
 days_passed = 0
-animals = 0
-guns = 0
-medicine = 0
-clothes = 0
-water = 0
+inventory = {"medicine": 0, "ammunition": 0, "tools": 0}
+recent_actions = []
+event_counter = EVENT_COUNTDOWN
+difficulty = ""
+jameson_mode = False
 
-# Theme Settings
-themes = {
-    "light": {"bg": "\033[0m", "fg": "\033[97m"},
-    "dark": {"bg": "\033[40m", "fg": "\033[37m"},
-}
-
-current_theme = themes["light"]
-
-# Game functions
+# Introduction
 def display_intro():
-    print(current_theme["fg"] + "Welcome to the Oregon Trail!" + current_theme["bg"])
-    print("Your goal is to travel 1000 miles to the west.")
-    print("Survive harsh conditions, manage your resources, and reach your destination.\n")
+    print("Welcome to Oregon Trail Deluxe Edition!")
+    print("Your goal is to survive the treacherous journey to Oregon.")
+    print("Along the way, you must manage your resources, make tough decisions, and survive random events.")
+    print("Choose your difficulty level:")
+    print("1. Easy")
+    print("2. Medium")
+    print("3. Hard")
+    print("4. Jameson (Special Challenge)")
+    print("-" * 50)
 
-def choose_profession():
-    global player_profession, money
+# Clear screen
+def clear_screen():
+    print("\n" * 5)
+
+# Difficulty settings
+def set_difficulty():
+    global difficulty, jameson_mode
     while True:
-        print("Choose your profession:")
-        print("1. Banker (Starts with $3,600, more money but higher risk of theft)")
-        print("2. Hunter (Starts with $2,400, balanced money and survival skills)")
-        print("3. Farmer (Starts with $1,200, least money but lower chance of bad events)")
-
-        choice = input("Enter your choice (1, 2, or 3): ")
+        choice = input("Select difficulty (1-4): ")
         if choice == '1':
-            player_profession = "Banker"
-            money = INITIAL_MONEY["Banker"]
+            difficulty = "Easy"
+            print("You have selected Easy difficulty.")
             break
         elif choice == '2':
-            player_profession = "Hunter"
-            money = INITIAL_MONEY["Hunter"]
+            difficulty = "Medium"
+            print("You have selected Medium difficulty.")
             break
         elif choice == '3':
-            player_profession = "Farmer"
-            money = INITIAL_MONEY["Farmer"]
+            difficulty = "Hard"
+            print("You have selected Hard difficulty.")
+            break
+        elif choice == '4':
+            difficulty = "Jameson"
+            jameson_mode = True
+            print("You have selected Jameson difficulty.")
             break
         else:
-            print("Invalid choice. Please choose again.")
+            print("Invalid choice! Please choose again.")
 
-    print(f"\nYou chose {player_profession}! You start with ${money}.\n")
-
-def display_status():
-    print("\n================= Status ==================")
-    print(f"| Name: {player_name} | Profession: {player_profession} |")
-    print(f"| Miles Traveled: {miles_traveled}/{DISTANCE_GOAL} ({(miles_traveled/DISTANCE_GOAL)*100:.2f}%) |")
-    print(f"| Food: {food} | Water: {water} | Clothes: {clothes} |")
-    print(f"| Medicine: {medicine} | Guns: {guns} | Animals: {animals} |")
-    print(f"| Health: {health}/{MAX_HEALTH} | Money: {money} | Days Passed: {days_passed} |")
-    print(f"| Wagon Parts: {wagon_parts} |")
-    print("============================================")
-
-def shopping_phase():
-    global money, food, health, wagon_parts, animals, guns, medicine, clothes, water
-    print("\nBefore you leave, you can buy supplies.")
-
-    while True:
-        print("\n--- Shopping Menu ---")
-        for index, item in enumerate(ITEM_PRICES.keys(), start=1):
-            print(f"{index}. {item} (${ITEM_PRICES[item]} per unit)")
-
-        print("Enter 'exit' to leave the shop.")
-        choice = input("What would you like to buy? ")
-
-        if choice.lower() == 'exit':
-            break
-
-        if choice.isdigit() and 1 <= int(choice) <= len(ITEM_PRICES):
-            item_name = list(ITEM_PRICES.keys())[int(choice) - 1]
-            item_price = ITEM_PRICES[item_name]
-
-            while True:
-                quantity = input(f"How many {item_name}s would you like to buy? ")
-                if quantity.isdigit() and int(quantity) > 0:
-                    quantity = int(quantity)
-                    total_cost = item_price * quantity
-                    if total_cost <= money:
-                        money -= total_cost
-                        if item_name == "Food":
-                            food += quantity
-                        elif item_name == "Water":
-                            water += quantity
-                        elif item_name == "Clothes":
-                            clothes += quantity
-                        elif item_name == "Medicine":
-                            medicine += quantity
-                        elif item_name == "Gun":
-                            guns += quantity
-                        elif item_name == "Animal":
-                            animals += quantity
-                        elif item_name == "Wagon Part":
-                            wagon_parts += quantity
-                        print(f"You bought {quantity} {item_name}(s)!")
-                        break
-                    else:
-                        print("You do not have enough money for that!")
-                else:
-                    print("Please enter a valid positive number.")
-        else:
-            print("Please select a valid option.")
-
-def random_event():
-    global food, health, animals, guns, medicine, water, clothes
-    event_type = random.choice(["none", "food_loss", "illness", "water_loss", "animal_loss", "clothing_damage", "theft"])
-    
-    if event_type == "none":
-        print("You encountered no significant events today.")
-    elif event_type == "food_loss":
-        lost_food = random.randint(10, 30)
-        food -= lost_food
-        print(f"You lost {lost_food} units of food due to spoilage.")
-    elif event_type == "water_loss":
-        lost_water = random.randint(10, 30)
-        water -= lost_water
-        print(f"Some of your water supplies were lost. You lost {lost_water} units.")
-    elif event_type == "illness":
-        health_loss = random.randint(5, 20)
-        health -= health_loss
-        print(f"Someone in your party got sick! Health decreased by {health_loss}.")
-    elif event_type == "animal_loss":
-        if animals > 0:
-            animals -= 1
-            print("One of your animals died! You lost 1 animal.")
-        else:
-            print("No animals to lose.")
-    elif event_type == "clothing_damage":
-        if clothes > 0:
-            lost_clothes = random.randint(1, 3)
-            clothes -= lost_clothes
-            print(f"Some of your clothes were damaged! You lost {lost_clothes} clothing items.")
-        else:
-            print("No clothes to lose.")
-    elif event_type == "theft":
-        stolen_amount = random.randint(500, 3000)
-        if money >= stolen_amount:
-            money -= stolen_amount
-        else:
-            money = 0
-        print(f"Thieves stole ${stolen_amount} from you!")
-
+# Travel function
 def travel():
-    global miles_traveled, days_passed, health, food, water
-    print("\nTraveling...")
-    travel_distance = random.randint(20, 50)  # Travel between 20 and 50 miles
-    miles_traveled += travel_distance
-    days_passed += random.randint(1, 3)  # Days passed during travel
-    food -= random.randint(5, 15)  # Consume food
-    water -= random.randint(5, 15)  # Consume water
-    health -= random.randint(0, 5)  # Random health loss
-    if health < 0:
-        health = 0
+    global miles_traveled, health, food, water, stamina, morale, days_passed, event_counter
+    clear_screen()
+    print("You decide to continue your journey.")
+    
+    # Determine travel distance and terrain/weather effects
+    if jameson_mode:
+        terrain = "River"
+        miles_this_trip = random.randint(10, 30)  # Limited distance
+        health -= 10  # Always a risk in the river
+        print("You're traveling in a river.")
+    else:
+        miles_this_trip = random.randint(30, 70)
+        terrain = random.choice(TERRAINS)
+    
+    weather = random.choice(WEATHERS)
+    
+    print(f"You're traveling through {terrain} under {weather} weather.")
+    
+    if terrain == "Mountains":
+        miles_this_trip -= 10
+        stamina -= 15
+        print("The mountains are tough to navigate, reducing your progress.")
+    
+    if weather == "Snowy":
+        health -= 10
+        stamina -= 10
+        print("The cold weather takes a toll on your health and stamina.")
+    
+    miles_traveled += miles_this_trip
+    days_passed += 1
+    event_counter -= 1
+    
+    # Resource consumption
+    food -= FOOD_PER_TRAVEL
+    water -= WATER_PER_TRAVEL
+    stamina -= STAMINA_PER_TRAVEL
+    morale -= MORALE_LOSS_TRAVEL
+    
     if food < 0:
         food = 0
+        health -= 10
+        recent_actions.append("You ran out of food! Health decreased.")
+    
     if water < 0:
         water = 0
+        health -= 10
+        recent_actions.append("You ran out of water! Health decreased.")
+    
+    if stamina < 0:
+        stamina = 0
+        health -= 10
+        recent_actions.append("You are exhausted! Health decreased.")
+    
+    # Trigger random event
+    if event_counter <= 0:
+        random_event()
+        event_counter = EVENT_COUNTDOWN  # Reset the event counter
 
-    random_event()  # Random events during travel
-
-def manage_inventory():
-    print("\n--- Inventory Management ---")
-    print(f"Food: {food} | Water: {water} | Clothes: {clothes}")
-    print(f"Guns: {guns} | Medicine: {medicine} | Animals: {animals}")
-    print(f"Wagon Parts: {wagon_parts}")
-
-def rest_phase():
-    global health, days_passed
-    days_rest = random.randint(1, 3)
-    days_passed += days_rest
-    health_gain = random.randint(10, 30)
-    health += health_gain
-    if health > MAX_HEALTH:
-        health = MAX_HEALTH
-    print(f"\nYou rested for {days_rest} days and gained {health_gain} health.")
-
-def theme_selector():
-    global current_theme
-    print("\nSelect a theme for the game:")
-    print("1. Light")
-    print("2. Dark")
-    choice = input("Enter your choice (1 or 2): ")
-    if choice == '1':
-        current_theme = themes["light"]
-    elif choice == '2':
-        current_theme = themes["dark"]
+# Random events
+def random_event():
+    global health, food, water, morale, money, inventory
+    
+    event = random.choice(EVENTS)
+    
+    # Adjust event consequences based on difficulty
+    if jameson_mode:
+        bad_event_chance = 0.8  # 80% chance of a bad event
     else:
-        print("Invalid choice. Defaulting to Light theme.")
+        bad_event_chance = 0.2 if difficulty == "Easy" else 0.5 if difficulty == "Medium" else 0.7
+        
+    if random.random() < bad_event_chance:
+        event = random.choice(EVENTS[0:5])  # Only bad events
+    
+    if event == "You encounter a wild animal!":
+        print("\nA wild animal attacks!")
+        if random.random() < 0.5:  # 50% chance to win the encounter
+            food_gained = random.randint(10, 20)
+            food += food_gained
+            print(f"You hunted successfully and gained {food_gained} units of food.")
+        else:
+            health -= 10
+            print("You were injured during the encounter!")
+    
+    elif event == "A storm is approaching.":
+        health -= 5
+        stamina -= 5
+        print("You lost health and stamina due to the storm.")
+    
+    elif event == "You meet a stranger who offers you food.":
+        food += 15
+        morale += 10
+        print("A kind stranger gave you food and boosted your morale!")
+    
+    elif event == "You find a river to rest by.":
+        health += 10
+        stamina += 10
+        print("You rested by the river and regained health and stamina.")
+    
+    elif event == "A band of hostile travelers attacks you!":
+        if random.random() < 0.5:
+            health -= 20
+            money_lost = random.randint(10, 30)
+            money -= money_lost
+            print(f"You were attacked and lost ${money_lost}. Health decreased.")
+        else:
+            ammunition = random.randint(5, 15)
+            inventory["ammunition"] += ammunition
+            print(f"You fended off the attackers and gained {ammunition} ammunition.")
+    
+    elif event == "You find an abandoned cabin.":
+        resources = random.choice(["medicine", "tools", "food", "water"])
+        if resources == "food":
+            food += 20
+        elif resources == "water":
+            water += 15
+        else:
+            inventory[resources] += 1
+        print(f"You found an abandoned cabin and scavenged for supplies: {resources}")
+    
+    elif event == "You discover a hidden stash of supplies.":
+        stash_money = random.randint(20, 50)
+        money += stash_money
+        print(f"You found a hidden stash of supplies and gained ${stash_money}.")
+    
+    elif event == "You stumble upon a lost traveler who needs help.":
+        if random.random() < 0.5:
+            print("You helped the traveler and they rewarded you with supplies!")
+            food += 10
+            water += 10
+            morale += 5
+        else:
+            print("You couldn't help the traveler in time, and your morale suffered.")
+            morale -= 10
+    
+    elif event == "You experience a miraculous turn of luck!":
+        print("Fortune smiles upon you! You gain extra resources.")
+        food += 20
+        water += 15
+        morale += 10
+        money += 50
+    
+    elif event == "A local merchant offers rare goods.":
+        print("You can trade with the merchant!")
+        trade_with_merchant()
 
-def play_game():
-    global player_name
-    player_name = input("Enter your name: ")
-    choose_profession()
-    shopping_phase()
-    theme_selector()
-
-    while miles_traveled < DISTANCE_GOAL and health > 0:
-        display_status()
-        action = input("\nWhat would you like to do? (travel, rest, inventory, quit): ").lower()
-        if action == "travel":
-            travel()
-        elif action == "rest":
-            rest_phase()
-        elif action == "inventory":
-            manage_inventory()
-        elif action == "quit":
-            print("Thanks for playing!")
+# Shop for supplies
+def trade_with_merchant():
+    global food, water, money, inventory
+    print("\nThe merchant has the following items:")
+    print("1. Special Food Pack (10 units for $25)")
+    print("2. Clean Water (10 units for $20)")
+    print("3. Premium Medicine ($30 per unit)")
+    print("4. Quality Tools ($25 each)")
+    
+    while True:
+        choice = input("What would you like to trade for? (1-4) or 5 to exit: ")
+        if choice == '1':
+            if money >= 25:
+                food += 10
+                money -= 25
+                print("You purchased a Special Food Pack!")
+            else:
+                print("You don't have enough money.")
+        elif choice == '2':
+            if money >= 20:
+                water += 10
+                money -= 20
+                print("You purchased Clean Water!")
+            else:
+                print("You don't have enough money.")
+        elif choice == '3':
+            if money >= 30:
+                inventory["medicine"] += 1
+                money -= 30
+                print("You purchased Premium Medicine!")
+            else:
+                print("You don't have enough money.")
+        elif choice == '4':
+            if money >= 25:
+                inventory["tools"] += 1
+                money -= 25
+                print("You purchased Quality Tools!")
+            else:
+                print("You don't have enough money.")
+        elif choice == '5':
+            print("You leave the merchant.")
             break
         else:
-            print("Invalid action. Please try again.")
+            print("Invalid choice!")
 
-    if miles_traveled >= DISTANCE_GOAL:
-        print(f"Congratulations, {player_name}! You made it to your destination in {days_passed} days!")
-    elif health <= 0:
-        print("You have perished on the trail. Game Over.")
+# Display player status
+def display_status():
+    clear_screen()
+    print("Player Status:")
+    print(f"Name: {player_name}")
+    print(f"Health: {health}")
+    print(f"Food: {food}")
+    print(f"Water: {water}")
+    print(f"Stamina: {stamina}")
+    print(f"Morale: {morale}")
+    print(f"Money: ${money}")
+    print(f"Miles Traveled: {miles_traveled} miles")
+    print(f"Days Passed: {days_passed} days")
+    print(f"Inventory: {inventory}")
+    print("-" * 50)
+
+# Profession selection
+def choose_profession():
+    global player_name
+    player_name = input("Enter your name: ")
+    print("Choose your profession:")
+    print("1. Doctor (Health specialist)")
+    print("2. Farmer (Food specialist)")
+    print("3. Hunter (Food and survival expert)")
+    print("4. Jameson (Newbie)")
+
+    while True:
+        profession_choice = input("Your choice (1-4): ")
+        if profession_choice == '1':
+            print("You have chosen Doctor!")
+            # Doctor benefits
+            global START_HEALTH
+            START_HEALTH += 20
+            break
+        elif profession_choice == '2':
+            print("You have chosen Farmer!")
+            # Farmer benefits
+            global START_FOOD
+            START_FOOD += 20
+            break
+        elif profession_choice == '3':
+            print("You have chosen Hunter!")
+            # Hunter benefits
+            global START_FOOD, START_MONEY
+            START_FOOD += 10
+            START_MONEY += 20
+            break
+        elif profession_choice == '4':
+            print("You have chosen Jameson! Good luck!")
+            # Jameson starts with lower stats
+            START_HEALTH -= 30
+            START_FOOD -= 20
+            START_WATER -= 10
+            break
+        else:
+            print("Invalid choice! Please choose again.")
 
 # Main game loop
+def game_loop():
+    global health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory
+    choose_profession()
+    set_difficulty()
+    while health > 0 and miles_traveled < DISTANCE_GOAL:
+        display_status()
+        print("Choose an action:")
+        print("1. Travel")
+        print("2. Check Status")
+        print("3. Rest")
+        print("4. Trade with Merchant")
+        print("5. Exit Game")
+        
+        choice = input("Your choice: ")
+        
+        if choice == '1':
+            travel()
+        elif choice == '2':
+            display_status()
+        elif choice == '3':
+            rest()
+        elif choice == '4':
+            trade_with_merchant()
+        elif choice == '5':
+            print("Thank you for playing! Safe travels.")
+            break
+        else:
+            print("Invalid choice, please try again.")
+    
+    if health <= 0:
+        print("You have succumbed to your injuries and failed the journey.")
+    elif miles_traveled >= DISTANCE_GOAL:
+        print("Congratulations! You have reached your destination and survived the Oregon Trail!")
+
+# Rest function
+def rest():
+    global health, stamina, food, morale
+    clear_screen()
+    print("You choose to rest.")
+    stamina += 30
+    health += 20
+    morale += 5
+    food -= 5  # Resting consumes some food
+    if food < 0:
+        food = 0
+        health -= 5
+        print("You ran out of food while resting! Health decreased.")
+    print("You feel refreshed after resting!")
+
+# Run the game
 if __name__ == "__main__":
-    display_intro()
-    play_game()
+    game_loop()
