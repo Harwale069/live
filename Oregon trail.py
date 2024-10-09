@@ -1,12 +1,13 @@
 import random
 import time
+import pickle
+import os
 
 # Constants
 DISTANCE_GOAL = 1000  # Total distance to travel (miles)
 START_HEALTH = 100
 START_FOOD = 50
 START_WATER = 40
-START_MONEY = 100
 START_STAMINA = 100
 START_MORALE = 75
 FOOD_PER_TRAVEL = 10
@@ -48,6 +49,22 @@ event_counter = EVENT_COUNTDOWN
 difficulty = ""
 jameson_mode = False
 
+# Color themes
+THEMES = {
+    "default": "\033[0m",
+    "red": "\033[91m",
+    "green": "\033[92m",
+    "yellow": "\033[93m",
+    "blue": "\033[94m",
+    "magenta": "\033[95m",
+    "cyan": "\033[96m",
+    "white": "\033[97m",
+}
+
+# Game save slots
+SAVE_SLOTS = 5
+save_file_prefix = "save_game_"
+
 # Introduction
 def display_intro():
     print("Welcome to Oregon Trail Deluxe Edition!")
@@ -88,6 +105,18 @@ def set_difficulty():
             break
         else:
             print("Invalid choice! Please choose again.")
+
+# Select color theme
+def select_color_theme():
+    print("Choose a color theme:")
+    for i, theme in enumerate(THEMES.keys(), 1):
+        print(f"{i}. {theme.capitalize()}")
+    choice = input("Select a theme (1-{}): ".format(len(THEMES)))
+    if choice.isdigit() and 1 <= int(choice) <= len(THEMES):
+        return list(THEMES.values())[int(choice) - 1]
+    else:
+        print("Invalid choice! Default theme selected.")
+        return THEMES["default"]
 
 # Travel function
 def travel():
@@ -222,35 +251,35 @@ def random_event():
             water += 10
             morale += 5
         else:
-            print("You couldn't help the traveler in time, and your morale suffered.")
-            morale -= 10
+            health -= 5
+            print("You tried to help, but it didn't go as planned. You lost some health.")
     
     elif event == "You experience a miraculous turn of luck!":
-        print("Fortune smiles upon you! You gain extra resources.")
-        food += 20
-        water += 15
-        morale += 10
-        money += 50
+        health += 10
+        morale += 15
+        print("Your luck has turned around! Health and morale increased.")
     
     elif event == "A local merchant offers rare goods.":
-        print("You can trade with the merchant!")
-        trade_with_merchant()
+        print("The merchant has offered you special items for trade.")
+        trade_menu()
 
-# Shop for supplies
-def trade_with_merchant():
-    global food, water, money, inventory
-    print("\nThe merchant has the following items:")
-    print("1. Special Food Pack (10 units for $25)")
-    print("2. Clean Water (10 units for $20)")
-    print("3. Premium Medicine ($30 per unit)")
-    print("4. Quality Tools ($25 each)")
-    
+# Merchant Trading
+def trade_menu():
+    global money, food, water, inventory
     while True:
-        choice = input("What would you like to trade for? (1-4) or 5 to exit: ")
+        print("\nMerchant Trading:")
+        print("1. Buy Special Food Pack ($50)")
+        print("2. Buy Clean Water ($20)")
+        print("3. Buy Premium Medicine ($30)")
+        print("4. Buy Quality Tools ($25)")
+        print("5. Leave the Merchant")
+        
+        choice = input("What would you like to buy? (1-5): ")
+        
         if choice == '1':
-            if money >= 25:
-                food += 10
-                money -= 25
+            if money >= 50:
+                food += 25
+                money -= 50
                 print("You purchased a Special Food Pack.")
             else:
                 print("You don't have enough money!")
@@ -304,6 +333,46 @@ def check_game_over():
         return True
     return False
 
+# Save game function
+def save_game(slot):
+    save_data = {
+        'player_name': player_name,
+        'health': health,
+        'food': food,
+        'water': water,
+        'stamina': stamina,
+        'morale': morale,
+        'money': money,
+        'miles_traveled': miles_traveled,
+        'days_passed': days_passed,
+        'inventory': inventory,
+        'recent_actions': recent_actions
+    }
+    with open(f"{save_file_prefix}{slot}.pkl", "wb") as f:
+        pickle.dump(save_data, f)
+    print(f"Game saved in slot {slot}.")
+
+# Load game function
+def load_game(slot):
+    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, recent_actions
+    try:
+        with open(f"{save_file_prefix}{slot}.pkl", "rb") as f:
+            save_data = pickle.load(f)
+        player_name = save_data['player_name']
+        health = save_data['health']
+        food = save_data['food']
+        water = save_data['water']
+        stamina = save_data['stamina']
+        morale = save_data['morale']
+        money = save_data['money']
+        miles_traveled = save_data['miles_traveled']
+        days_passed = save_data['days_passed']
+        inventory = save_data['inventory']
+        recent_actions = save_data['recent_actions']
+        print(f"Game loaded from slot {slot}.")
+    except FileNotFoundError:
+        print(f"No save found in slot {slot}.")
+
 # Main game loop
 def main():
     global player_name
@@ -311,15 +380,30 @@ def main():
     display_intro()
     player_name = input("Enter your name: ")
     set_difficulty()
+    color_theme = select_color_theme()
     
     while True:
-        travel()
+        clear_screen()
+        print(color_theme + f"Welcome, {player_name}! Current Theme: {color_theme}")
         display_status()
-        if check_game_over():
-            break
-        action = input("What would you like to do next? (travel, status, exit): ").strip().lower()
+        action = input("What would you like to do next? (travel, save, load, status, exit): ").strip().lower()
+        
         if action == "travel":
-            continue
+            travel()
+            if check_game_over():
+                break
+        elif action == "save":
+            slot = input("Select save slot (1-5): ")
+            if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
+                save_game(slot)
+            else:
+                print("Invalid slot! Please choose a slot between 1 and 5.")
+        elif action == "load":
+            slot = input("Select load slot (1-5): ")
+            if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
+                load_game(slot)
+            else:
+                print("Invalid slot! Please choose a slot between 1 and 5.")
         elif action == "status":
             display_status()
         elif action == "exit":
