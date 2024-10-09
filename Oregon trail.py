@@ -1,237 +1,217 @@
 import random
-import time
+from colorama import Fore, Style
 
-# Constants
-MAX_HEALTH = 100
-INITIAL_MONEY = 100
-INITIAL_FOOD = 50
-INITIAL_WATER = 40
-INITIAL_STAMINA = 100
-INITIAL_MORALE = 75
-TRAVEL_DISTANCE = 89  # Distance traveled in one travel action
-DAYS_PER_TRAVEL = 1
-MAX_COMPANIONS = 3
-EVENTS = [
-    "Found a hidden treasure!",
-    "A wild animal attacks!",
-    "Met a friendly traveler!",
-    "Caught in a storm!",
-    "A companion falls ill!",
-    "Discovered a useful item!",
-    "Faced a difficult choice!",
-]
-WEATHER_CONDITIONS = ["Sunny", "Rainy", "Snowy", "Windy"]
-TRADING_ITEMS = {
-    "Food": 10,
-    "Water": 5,
-    "Tools": 15,
+# Constants for professions and difficulties
+PROFESSIONS = {
+    "Hunter": {
+        "pros": ["Increased food availability", "Better animal tracking"],
+        "cons": ["Risk of animal attacks", "Requires more stamina"],
+        "resource_gain": {"food": 3, "wildlife": 1},
+        "market_value": {"food": 2, "tools": 5, "weapons": 10},
+    },
+    "Fisher": {
+        "pros": ["Steady food supply from water", "Better fishing gear"],
+        "cons": ["Requires access to water", "Bad weather affects fishing"],
+        "resource_gain": {"food": 2, "fish": 3},
+        "market_value": {"food": 1, "tools": 5, "weapons": 8},
+    },
+    "Trapper": {
+        "pros": ["Better chance of rare traps", "Stealthy"],
+        "cons": ["Takes time to set traps", "Attracts predators"],
+        "resource_gain": {"food": 2, "trap": 1},
+        "market_value": {"food": 2, "tools": 4, "weapons": 8},
+    },
+    "Merchant": {
+        "pros": ["Profitable trades", "Access to various goods"],
+        "cons": ["Can run out of goods", "Less survival skills"],
+        "resource_gain": {"trade_goods": 5},
+        "market_value": {"food": 1, "tools": 6, "weapons": 12},
+    },
+    "Blacksmith": {
+        "pros": ["Create tools and weapons", "Improved durability"],
+        "cons": ["Needs metal resources", "Risk of burns"],
+        "resource_gain": {"metal": 2, "tools": 1},
+        "market_value": {"food": 1, "tools": 8, "weapons": 15},
+    },
+    "Doctor": {
+        "pros": ["Heal and boost morale", "Better medicine use"],
+        "cons": ["High supply usage", "Limited offensive capabilities"],
+        "resource_gain": {"medicine": 3, "health_pack": 1},
+        "market_value": {"food": 2, "tools": 5, "weapons": 10},
+    },
+    "Guide": {
+        "pros": ["Reduce chances of getting lost", "Better navigation"],
+        "cons": ["Less survival skills", "Struggles with hunting"],
+        "resource_gain": {"map": 1},
+        "market_value": {"food": 2, "tools": 4, "weapons": 10},
+    },
 }
-RESOURCES = ["Food", "Water", "Ammunition", "Tools"]
-MAX_STAMINA = 100
+
+DIFFICULTY_SETTINGS = {
+    "Easy": {"event_weights": [0.5, 0.2, 0.2, 0.1, 0.1]},
+    "Normal": {"event_weights": [0.4, 0.3, 0.2, 0.1, 0.1]},
+    "Hard": {"event_weights": [0.3, 0.3, 0.2, 0.1, 0.1]},
+    "Jameson": {"event_weights": [0.2, 0.4, 0.2, 0.1, 0.1]},
+}
+
+# Updated miles and pace
+PACE_DISTANCE = {
+    "Slow": 10,
+    "Normal": 15,
+    "Fast": 20
+}
+
+# Main shop items
+SHOP_ITEMS = {
+    "Basic": {"Food": 2, "Tools": 5, "Weapons": 10},
+    "Advanced": {"Medicine": 8, "Armor": 15, "Trade Goods": 12}
+}
 
 class Player:
-    def __init__(self, name, profession):
+    def __init__(self, name, profession, difficulty):
         self.name = name
         self.profession = profession
-        self.health = MAX_HEALTH
-        self.food = INITIAL_FOOD
-        self.water = INITIAL_WATER
-        self.stamina = INITIAL_STAMINA
-        self.morale = INITIAL_MORALE
-        self.money = INITIAL_MONEY
+        self.difficulty = difficulty
+        self.health = 100
+        self.stamina = 100
         self.miles_traveled = 0
-        self.days_passed = 0
-        self.companions = []
-
-    def travel(self, pace):
-        if pace == "Slow":
-            distance = TRAVEL_DISTANCE - 20
-        elif pace == "Normal":
-            distance = TRAVEL_DISTANCE
-        elif pace == "Fast":
-            distance = TRAVEL_DISTANCE + 20
-
-        # Adjust health and resources based on travel
-        self.miles_traveled += distance
-        self.days_passed += DAYS_PER_TRAVEL
-        self.food -= 2
-        self.water -= 1
-        self.stamina -= 10
-        self.morale -= random.randint(1, 5)
-
-        if self.stamina < 0:
-            self.stamina = 0
-
-        self.random_event()
-
-    def random_event(self):
-        event_chance = random.randint(1, 10)
-        if event_chance == 1:  # 10% chance of an event
-            event = random.choice(EVENTS)
-            print(f"Event: {event}")
-            if event == "A companion falls ill!":
-                if self.companions:
-                    ill_companion = random.choice(self.companions)
-                    print(f"{ill_companion.name} has fallen ill!")
-                    self.morale -= 5
-            elif event == "Discovered a useful item!":
-                found_item = random.choice(RESOURCES)
-                print(f"You found {found_item}!")
-                if found_item == "Food":
-                    self.food += 10
-                elif found_item == "Water":
-                    self.water += 10
-                elif found_item == "Ammunition":
-                    print("You found ammunition!")
-                elif found_item == "Tools":
-                    print("You found tools!")
+        self.money = 10  # Starting money in historical currency
+        self.resources = {"food": 0, "wildlife": 0, "fish": 0, "trap": 0, "trade_goods": 0, "metal": 0, "medicine": 0, "health_pack": 0}
+        self.morale = 100  # Morale level
+        self.pros = PROFESSIONS[profession]["pros"]
+        self.cons = PROFESSIONS[profession]["cons"]
 
     def display_stats(self):
-        print(f"Current Stats:\n"
-              f"Health: {self.health}\n"
-              f"Food: {self.food}\n"
-              f"Water: {self.water}\n"
-              f"Stamina: {self.stamina}\n"
-              f"Morale: {self.morale}\n"
-              f"Money: ${self.money}\n"
-              f"Miles Traveled: {self.miles_traveled}\n"
-              f"Days Passed: {self.days_passed}\n")
+        print(Fore.GREEN + f"Name: {self.name}, Profession: {self.profession}, Difficulty: {self.difficulty}")
+        print(Fore.CYAN + f"Health: {self.health}, Stamina: {self.stamina}, Miles Traveled: {self.miles_traveled}, Money: {self.money}, Morale: {self.morale}")
+        print(Fore.YELLOW + "Pros:", ", ".join(self.pros))
+        print(Fore.RED + "Cons:", ", ".join(self.cons))
+        print(Fore.MAGENTA + "Resources:", self.resources)
 
-    def add_companion(self, companion):
-        if len(self.companions) < MAX_COMPANIONS:
-            self.companions.append(companion)
-            print(f"{companion.name} has joined your party.")
+    def travel(self, pace):
+        miles = PACE_DISTANCE[pace]
+        self.miles_traveled += miles
+        self.stamina -= miles / 2  # Cost of stamina per mile
+
+        # Determine event based on difficulty
+        event = random.choices(
+            ["none", "animal encounter", "resource find", "market event", "weather change"],
+            weights=DIFFICULTY_SETTINGS[self.difficulty]["event_weights"],
+            k=1
+        )[0]
+
+        if event == "animal encounter":
+            print(Fore.RED + "You encountered a wild animal!")
+            self.handle_animal_encounter()
+        elif event == "resource find":
+            print(Fore.GREEN + "You found some resources on your journey!")
+            self.collect_resources()
+        elif event == "market event":
+            self.handle_market_event()
+        elif event == "weather change":
+            print(Fore.BLUE + "The weather changed! Travel speed may be affected.")
+            self.adjust_for_weather()
+
+        # Update stamina and morale after travel
+        if self.stamina < 0:
+            self.health -= 10  # Stamina loss affects health
+            print(Fore.RED + "You are exhausted! Health decreased.")
         else:
-            print("You cannot have more than 3 companions.")
+            self.morale += 5  # Successful travel boosts morale
+            print(Fore.GREEN + "You traveled successfully and morale improved!")
 
-class Companion:
-    def __init__(self, name, skill):
-        self.name = name
-        self.skill = skill
-
-def hunt(player):
-    if player.food <= 0:
-        print("You need food to hunt.")
-        return
-
-    hunt_success = random.choice([True, False])
-    if hunt_success:
-        food_found = random.randint(5, 15)
-        player.food += food_found
-        print(f"You successfully hunted and found {food_found} units of food!")
-    else:
-        print("You went hunting but returned empty-handed.")
-
-def fish(player):
-    if player.water <= 0:
-        print("You need water nearby to fish.")
-        return
-
-    fish_success = random.choice([True, False])
-    if fish_success:
-        fish_caught = random.randint(3, 10)
-        player.food += fish_caught
-        print(f"You caught {fish_caught} units of fish!")
-    else:
-        print("You tried to fish but didn't catch anything.")
-
-def check_companions(player):
-    if not player.companions:
-        print("You have no companions.")
-    else:
-        print("Your companions:")
-        for companion in player.companions:
-            print(f"{companion.name} - Skill: {companion.skill}")
-
-def weather_report():
-    current_weather = random.choice(WEATHER_CONDITIONS)
-    print(f"Current weather: {current_weather}")
-
-def trading_post(player):
-    print("Welcome to the Trading Post!")
-    print("Available items for trade:")
-    for item, price in TRADING_ITEMS.items():
-        print(f"{item}: ${price}")
-
-    trade_choice = input("Which item would you like to trade for? (Food, Water, Tools) ")
-    if trade_choice in TRADING_ITEMS:
-        if player.money >= TRADING_ITEMS[trade_choice]:
-            player.money -= TRADING_ITEMS[trade_choice]
-            if trade_choice == "Food":
-                player.food += 1
-            elif trade_choice == "Water":
-                player.water += 1
-            elif trade_choice == "Tools":
-                print("You traded for tools.")
-            print(f"You traded for {trade_choice}.")
+    def handle_animal_encounter(self):
+        print(Fore.RED + "You must decide to fight, flee, or use a trap.")
+        choice = input("Choose (fight/flee/trap): ").lower()
+        if choice == "fight":
+            if random.random() > 0.5:  # 50% chance to succeed
+                print(Fore.GREEN + "You defeated the animal!")
+                self.resources["wildlife"] += 1
+            else:
+                self.health -= 20
+                print(Fore.RED + "You were injured in the fight!")
+        elif choice == "flee":
+            print(Fore.YELLOW + "You managed to escape!")
+        elif choice == "trap":
+            if self.resources["trap"] > 0:
+                print(Fore.GREEN + "You successfully trapped the animal!")
+                self.resources["wildlife"] += 1
+                self.resources["trap"] -= 1
+            else:
+                print(Fore.RED + "You have no traps available!")
         else:
-            print("You don't have enough money for that item.")
-    else:
-        print("Invalid choice.")
+            print(Fore.RED + "Invalid choice!")
 
-def camp(player):
-    print("You set up camp for the night.")
-    player.stamina += 20
-    if player.stamina > MAX_STAMINA:
-        player.stamina = MAX_STAMINA
-    player.food -= 1  # Consuming food for the camp
-    print(f"Stamina restored to {player.stamina}. You consumed 1 unit of food.")
+    def handle_market_event(self):
+        print(Fore.YELLOW + "You come across a market with fluctuating prices.")
+        action = input("Would you like to buy or sell? (buy/sell): ").lower()
+        if action == "buy":
+            self.buy_items()
+        elif action == "sell":
+            self.sell_items()
+        else:
+            print(Fore.RED + "Invalid action!")
 
-def add_companion(player):
-    name = input("Enter the name of your companion: ")
-    skill = input("Enter the skill of your companion (Hunter, Fisher, Merchant): ")
-    companion = Companion(name, skill)
-    player.add_companion(companion)
+    def buy_items(self):
+        print(Fore.BLUE + "Available items:")
+        for item, price in SHOP_ITEMS["Basic"].items():
+            print(f"{item}: {price} coins")
+        item_to_buy = input("Which item would you like to buy? ")
+        if item_to_buy in SHOP_ITEMS["Basic"]:
+            if self.money >= SHOP_ITEMS["Basic"][item_to_buy]:
+                self.money -= SHOP_ITEMS["Basic"][item_to_buy]
+                self.resources[item_to_buy.lower()] += 1
+                print(Fore.GREEN + f"You bought a {item_to_buy}!")
+            else:
+                print(Fore.RED + "You don't have enough money!")
+        else:
+            print(Fore.RED + "Invalid item!")
 
-def game_loop():
-    name = input("What is your name, traveler? ")
-    profession = input("Choose your profession (Hunter, Fisher, Trapper, Merchant): ")
-    player = Player(name, profession)
+    def sell_items(self):
+        print(Fore.BLUE + "Your resources:")
+        for item, quantity in self.resources.items():
+            if quantity > 0:
+                print(f"{item.capitalize()}: {quantity}")
+        item_to_sell = input("Which item would you like to sell? ").lower()
+        if item_to_sell in self.resources and self.resources[item_to_sell] > 0:
+            price = PROFESSIONS[self.profession]["market_value"].get(item_to_sell.capitalize(), 0)
+            self.money += price
+            self.resources[item_to_sell] -= 1
+            print(Fore.GREEN + f"You sold a {item_to_sell} for {price} coins!")
+        else:
+            print(Fore.RED + "Invalid item or you have none!")
 
-    while True:
+    def adjust_for_weather(self):
+        if random.random() < 0.3:  # 30% chance for bad weather
+            print(Fore.BLUE + "It's raining heavily, reducing your speed.")
+            self.stamina -= 10  # Additional stamina cost for bad weather
+
+    def collect_resources(self):
+        for resource, amount in PROFESSIONS[self.profession]["resource_gain"].items():
+            self.resources[resource] += amount
+        print(Fore.GREEN + "You collected resources: ", self.resources)
+
+def main():
+    print(Fore.MAGENTA + "Welcome to the Survival Game!")
+    player_name = input("Enter your name: ")
+    player_profession = input(f"Choose your profession {list(PROFESSIONS.keys())}: ")
+    player_difficulty = input(f"Choose difficulty {list(DIFFICULTY_SETTINGS.keys())}: ")
+
+    player = Player(player_name, player_profession, player_difficulty)
+
+    while player.health > 0 and player.morale > 0:
         player.display_stats()
-        print("Options:")
-        print("1. Travel")
-        print("2. Save Game (not implemented)")
-        print("3. Load Game (not implemented)")
-        print("4. Exit Game")
-        print("5. Hunt (Requires food)")
-        print("6. Fish (Requires water nearby)")
-        print("7. Check Companions")
-        print("8. Weather Report")
-        print("9. Visit Trading Post")
-        print("10. Set up Camp")
-        print("11. Add Companion")
-        
-        choice = input("What would you like to do? (1-11): ")
+        pace = input("Choose your pace (Slow/Normal/Fast): ")
+        player.travel(pace)
 
-        if choice == "1":
-            pace = input("Choose your pace (Normal, Fast, Slow): ")
-            player.travel(pace)
-        elif choice == "2":
-            print("Save Game (not implemented)")
-        elif choice == "3":
-            print("Load Game (not implemented)")
-        elif choice == "4":
-            print("Exiting game. Goodbye!")
+        if player.miles_traveled >= 100:  # Goal to travel 100 miles
+            print(Fore.GREEN + f"Congratulations, {player.name}! You've successfully traveled 100 miles!")
             break
-        elif choice == "5":
-            hunt(player)
-        elif choice == "6":
-            fish(player)
-        elif choice == "7":
-            check_companions(player)
-        elif choice == "8":
-            weather_report()
-        elif choice == "9":
-            trading_post(player)
-        elif choice == "10":
-            camp(player)
-        elif choice == "11":
-            add_companion(player)
-        else:
-            print("Invalid choice. Please choose again.")
 
-# Start the game
+    if player.health <= 0:
+        print(Fore.RED + "You have died. Game over.")
+    elif player.morale <= 0:
+        print(Fore.RED + "You have lost your will to survive. Game over.")
+
 if __name__ == "__main__":
-    game_loop()
+    main()
