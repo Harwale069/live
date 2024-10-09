@@ -2,10 +2,15 @@ import random
 import time
 import pickle
 import os
+import subprocess
+import sys
+import curses
+from threading import Thread
+from datetime import datetime
 
 # Constants
-START_MONEY = 100  # Define your starting money amount
-DISTANCE_GOAL = 1000  # Total distance to travel (miles)
+START_MONEY = 100
+DISTANCE_GOAL = 1000
 START_HEALTH = 100
 START_FOOD = 50
 START_WATER = 40
@@ -15,9 +20,10 @@ FOOD_PER_TRAVEL = 10
 WATER_PER_TRAVEL = 5
 STAMINA_PER_TRAVEL = 10
 MORALE_LOSS_TRAVEL = 5
-EVENT_COUNTDOWN = 3  # Days until another event occurs
+EVENT_COUNTDOWN = 3
+DEBUG_MODE = False
 
-# Events and locations
+# Events, terrains, and professions
 EVENTS = [
     "You encounter a wild animal!",
     "A storm is approaching.",
@@ -33,6 +39,7 @@ EVENTS = [
 
 TERRAINS = ["Desert", "Forest", "Mountains", "Plains", "River"]
 WEATHERS = ["Sunny", "Rainy", "Snowy", "Windy"]
+PROFESSIONS = ["Hunter", "Fisher", "Trapper", "Merchant", "Traveler"]
 
 # Player stats
 player_name = ""
@@ -45,10 +52,10 @@ money = START_MONEY
 miles_traveled = 0
 days_passed = 0
 inventory = {"medicine": 0, "ammunition": 0, "tools": 0}
-recent_actions = []
+companions = []
 event_counter = EVENT_COUNTDOWN
 difficulty = ""
-jameson_mode = False
+pace = "Normal"
 
 # Color themes
 THEMES = {
@@ -62,9 +69,29 @@ THEMES = {
     "white": "\033[97m",
 }
 
+# ASCII visuals
+ASCII_VIEWS = {
+    "river": r"""
+         ~ ~ ~
+       ~       ~
+     ~~~~~~~~~~~~
+    """,
+    "cabin": r"""
+        ___
+       /   \
+      |     |
+      |_____|""",
+}
+
 # Game save slots
 SAVE_SLOTS = 5
 save_file_prefix = "save_game_"
+
+# Function to run a separate console for displaying actions
+def run_console():
+    while True:
+        print(f"Current Stats: Health: {health}, Food: {food}, Water: {water}, Stamina: {stamina}, Morale: {morale}, Money: {money}, Miles Traveled: {miles_traveled}, Days Passed: {days_passed}")
+        time.sleep(3)
 
 # Introduction
 def display_intro():
@@ -72,6 +99,16 @@ def display_intro():
     print("Your goal is to survive the treacherous journey to Oregon.")
     print("Make wise choices and manage your resources well!")
     print("You have a starting balance of ${}.".format(START_MONEY))
+    choose_profession()
+
+# Profession selection
+def choose_profession():
+    global profession
+    print("Choose your profession:")
+    for i, profession in enumerate(PROFESSIONS):
+        print(f"{i + 1}. {profession}")
+    choice = int(input("Enter the number of your choice: ")) - 1
+    profession = PROFESSIONS[choice]
 
 # Display player stats
 def display_stats():
@@ -93,7 +130,19 @@ def travel():
         print("You can't travel anymore. You need food, water, or rest!")
         return
 
+    # Change pace based on player choice
+    pace_choice = input("Choose your pace (Normal, Fast, Slow): ")
+    global pace
+    pace = pace_choice if pace_choice in ["Normal", "Fast", "Slow"] else "Normal"
+
     distance = random.randint(50, 100)  # Random travel distance
+    if pace == "Fast":
+        distance *= 1.5
+        stamina -= 15
+    elif pace == "Slow":
+        distance *= 0.75
+        stamina -= 5
+
     miles_traveled += distance
     food -= FOOD_PER_TRAVEL
     water -= WATER_PER_TRAVEL
@@ -163,6 +212,7 @@ def handle_stranger():
 
 def handle_river():
     print("You find a river to rest by. Your morale improves by 10.")
+    print(ASCII_VIEWS["river"])
     global morale
     morale += 10
     display_stats()
@@ -177,6 +227,7 @@ def handle_hostile_travelers():
 def handle_abandoned_cabin():
     global food, water
     print("You find an abandoned cabin. You gain 30 food and 20 water.")
+    print(ASCII_VIEWS["cabin"])
     food += 30
     water += 20
     display_stats()
@@ -203,63 +254,55 @@ def handle_merchant():
     print("A local merchant offers rare goods. You can buy supplies.")
     print("1. Food ($5 each)")
     print("2. Water ($3 each)")
-    print("3. Medicine ($20 each)")
-    print("4. Ammunition ($10 each)")
-
-    choice = input("What would you like to buy? (1-4, or 'exit' to leave): ")
-    if choice == "1":
-        quantity = int(input("How many food items would you like to buy? "))
-        cost = quantity * 5
-        if cost <= money:
-            money -= cost
-            inventory["food"] += quantity
-            print("You bought {} food items.".format(quantity))
+    print("3. Medicine ($10 each)")
+    choice = input("Choose an item to buy (1-3) or type 'exit' to leave: ")
+    if choice == '1':
+        quantity = int(input("How many units of food would you like to buy? "))
+        total_cost = quantity * 5
+        if money >= total_cost:
+            money -= total_cost
+            global food
+            food += quantity
+            print(f"You bought {quantity} units of food.")
         else:
             print("You don't have enough money!")
-    elif choice == "2":
-        quantity = int(input("How many water items would you like to buy? "))
-        cost = quantity * 3
-        if cost <= money:
-            money -= cost
-            inventory["water"] += quantity
-            print("You bought {} water items.".format(quantity))
+    elif choice == '2':
+        quantity = int(input("How many units of water would you like to buy? "))
+        total_cost = quantity * 3
+        if money >= total_cost:
+            money -= total_cost
+            global water
+            water += quantity
+            print(f"You bought {quantity} units of water.")
         else:
             print("You don't have enough money!")
-    elif choice == "3":
-        quantity = int(input("How many medicine items would you like to buy? "))
-        cost = quantity * 20
-        if cost <= money:
-            money -= cost
+    elif choice == '3':
+        quantity = int(input("How many units of medicine would you like to buy? "))
+        total_cost = quantity * 10
+        if money >= total_cost:
+            money -= total_cost
+            global inventory
             inventory["medicine"] += quantity
-            print("You bought {} medicine items.".format(quantity))
+            print(f"You bought {quantity} units of medicine.")
         else:
             print("You don't have enough money!")
-    elif choice == "4":
-        quantity = int(input("How many ammunition items would you like to buy? "))
-        cost = quantity * 10
-        if cost <= money:
-            money -= cost
-            inventory["ammunition"] += quantity
-            print("You bought {} ammunition items.".format(quantity))
-        else:
-            print("You don't have enough money!")
-    elif choice.lower() == 'exit':
-        print("You leave the merchant's stall.")
+    elif choice == 'exit':
+        print("You decided not to buy anything.")
     else:
-        print("Invalid choice.")
+        print("Invalid choice!")
 
-# Function to save the game
+# Save game function
 def save_game(slot):
     with open(f"{save_file_prefix}{slot}.pkl", "wb") as file:
-        pickle.dump((player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory), file)
+        pickle.dump((player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace), file)
     print("Game saved successfully!")
 
-# Function to load the game
+# Load game function
 def load_game(slot):
-    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory
+    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace
     if os.path.exists(f"{save_file_prefix}{slot}.pkl"):
         with open(f"{save_file_prefix}{slot}.pkl", "rb") as file:
-            (player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory) = pickle.load(file)
+            (player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace) = pickle.load(file)
         print("Game loaded successfully!")
     else:
         print("Save slot is empty!")
@@ -274,9 +317,12 @@ def end_game():
 # Main game loop
 def main():
     global player_name
+    # Start separate console for displaying actions
+    Thread(target=run_console, daemon=True).start()
+
     display_intro()
     player_name = input("What is your name, traveler? ")
-    
+
     while True:
         display_stats()
         print("\nOptions:")
@@ -284,8 +330,11 @@ def main():
         print("2. Save Game")
         print("3. Load Game")
         print("4. Exit Game")
-
-        choice = input("What would you like to do? (1-4): ")
+        print("5. Hunt (Requires food)")
+        print("6. Fish (Requires water nearby)")
+        print("7. Check Companions")
+        
+        choice = input("What would you like to do? (1-7): ")
 
         if choice == "1":
             travel()
@@ -304,8 +353,47 @@ def main():
         elif choice == "4":
             print("Exiting the game. Goodbye!")
             break
+        elif choice == "5":
+            hunt()
+        elif choice == "6":
+            fish()
+        elif choice == "7":
+            check_companions()
         else:
             print("Invalid choice. Please try again.")
+
+# Hunting mechanism
+def hunt():
+    global food
+    print("You go hunting...")
+    success = random.choice([True, False])
+    if success:
+        food_gained = random.randint(10, 50)
+        food += food_gained
+        print(f"You successfully hunted and gained {food_gained} food!")
+    else:
+        print("You failed to hunt anything.")
+
+# Fishing mechanism
+def fish():
+    global food
+    print("You go fishing...")
+    success = random.choice([True, False])
+    if success:
+        food_gained = random.randint(10, 40)
+        food += food_gained
+        print(f"You caught some fish and gained {food_gained} food!")
+    else:
+        print("You didn't catch any fish.")
+
+# Check companions
+def check_companions():
+    if companions:
+        print("Your companions:")
+        for companion in companions:
+            print(companion)
+    else:
+        print("You have no companions.")
 
 if __name__ == "__main__":
     main()
