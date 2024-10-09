@@ -119,6 +119,53 @@ def select_color_theme():
         print("Invalid choice! Default theme selected.")
         return THEMES["default"]
 
+# Store function
+def store_menu():
+    global money
+    store_items = {
+        "Special Food Pack": {"price": 50, "description": "A pack filled with high-quality food."},
+        "Clean Water": {"price": 20, "description": "Pure and refreshing water."},
+        "Premium Medicine": {"price": 30, "description": "Essential for treating injuries."},
+        "Quality Tools": {"price": 25, "description": "Useful for repairs and crafting."},
+        "Survival Kit": {"price": 75, "description": "Contains various tools and supplies for survival."},
+        "First Aid Kit": {"price": 60, "description": "Heals wounds and restores health."}
+    }
+    
+    print("\nWelcome to the Merchant's Store!")
+    print("Available items for purchase:")
+    for item, details in store_items.items():
+        print(f"{item}: ${details['price']} - {details['description']}")
+    
+    while True:
+        choice = input("\nWhich item would you like to buy? (Enter item name or 'exit' to leave): ")
+        
+        if choice == "exit":
+            print("Thank you for visiting the store!")
+            break
+        elif choice in store_items:
+            item_price = store_items[choice]['price']
+            if money >= item_price:
+                money -= item_price
+                if choice == "Special Food Pack":
+                    food += 25
+                elif choice == "Clean Water":
+                    water += 10
+                elif choice == "Premium Medicine":
+                    inventory["medicine"] += 1
+                elif choice == "Quality Tools":
+                    inventory["tools"] += 1
+                elif choice == "Survival Kit":
+                    food += 15
+                    water += 5
+                    inventory["tools"] += 1
+                elif choice == "First Aid Kit":
+                    health += 20
+                print(f"You purchased {choice}.")
+            else:
+                print("You don't have enough money!")
+        else:
+            print("Invalid choice! Please choose again.")
+
 # Travel function
 def travel():
     global miles_traveled, health, food, water, stamina, morale, days_passed, event_counter
@@ -202,137 +249,70 @@ def random_event():
             print(f"You hunted successfully and gained {food_gained} units of food.")
         else:
             health -= 10
-            print("You were injured during the encounter!")
+            print("You were injured while trying to escape!")
     
     elif event == "A storm is approaching.":
+        print("\nA storm hits your camp!")
+        morale -= 10
         health -= 5
-        stamina -= 5
-        print("You lost health and stamina due to the storm.")
+        print("You lose morale and some health.")
     
     elif event == "You meet a stranger who offers you food.":
-        food += 15
-        morale += 10
-        print("A kind stranger gave you food and boosted your morale!")
+        print("\nA stranger approaches and offers you food.")
+        if random.random() < 0.5:  # 50% chance to accept
+            food_gained = random.randint(15, 30)
+            food += food_gained
+            print(f"You accepted the offer and gained {food_gained} units of food.")
+        else:
+            print("You declined the offer, wary of the stranger.")
     
     elif event == "You find a river to rest by.":
-        health += 10
-        stamina += 10
-        print("You rested by the river and regained health and stamina.")
+        print("\nYou find a river and decide to rest.")
+        water += 20
+        stamina += 20
+        print("You gain water and stamina from the rest.")
     
     elif event == "A band of hostile travelers attacks you!":
-        if random.random() < 0.5:
-            health -= 20
-            money_lost = random.randint(10, 30)
-            money -= money_lost
-            print(f"You were attacked and lost ${money_lost}. Health decreased.")
-        else:
-            ammunition = random.randint(5, 15)
-            inventory["ammunition"] += ammunition
-            print(f"You fended off the attackers and gained {ammunition} ammunition.")
+        print("\nHostile travelers attack your camp!")
+        health -= 20
+        morale -= 15
+        print("You suffered injuries and lost morale.")
     
     elif event == "You find an abandoned cabin.":
-        resources = random.choice(["medicine", "tools", "food", "water"])
-        if resources == "food":
-            food += 20
-        elif resources == "water":
-            water += 15
-        else:
-            inventory[resources] += 1
-        print(f"You found an abandoned cabin and scavenged for supplies: {resources}")
+        print("\nYou discover an abandoned cabin!")
+        inventory["tools"] += 2
+        print("You find tools in the cabin.")
     
     elif event == "You discover a hidden stash of supplies.":
-        stash_money = random.randint(20, 50)
-        money += stash_money
-        print(f"You found a hidden stash of supplies and gained ${stash_money}.")
+        print("\nYou discover a stash of supplies!")
+        food += 50
+        water += 30
+        print("You gain food and water.")
     
     elif event == "You stumble upon a lost traveler who needs help.":
-        if random.random() < 0.5:
-            print("You helped the traveler and they rewarded you with supplies!")
-            food += 10
-            water += 10
-            morale += 5
+        print("\nA lost traveler approaches you for help.")
+        if random.random() < 0.5:  # 50% chance to help
+            morale += 10
+            print("You helped the traveler, and your morale increased.")
         else:
-            health -= 5
-            print("You tried to help, but it didn't go as planned. You lost some health.")
+            print("You ignored the traveler and continued on your way.")
     
     elif event == "You experience a miraculous turn of luck!":
-        health += 10
-        morale += 15
-        print("Your luck has turned around! Health and morale increased.")
+        print("\nYou experience a miracle!")
+        money += 50
+        print("You found $50 in your path!")
     
     elif event == "A local merchant offers rare goods.":
-        print("The merchant has offered you special items for trade.")
-        trade_menu()
-
-# Merchant Trading
-def trade_menu():
-    global money, food, water, inventory
-    while True:
-        print("\nMerchant Trading:")
-        print("1. Buy Special Food Pack ($50)")
-        print("2. Buy Clean Water ($20)")
-        print("3. Buy Premium Medicine ($30)")
-        print("4. Buy Quality Tools ($25)")
-        print("5. Leave the Merchant")
-        
-        choice = input("What would you like to buy? (1-5): ")
-        
-        if choice == '1':
-            if money >= 50:
-                food += 25
-                money -= 50
-                print("You purchased a Special Food Pack.")
+        print("\nA merchant approaches with rare goods!")
+        if random.random() < 0.7:  # 70% chance to buy
+            if money >= 40:
+                money -= 40
+                food += 20
+                print("You purchased food from the merchant.")
             else:
-                print("You don't have enough money!")
-        elif choice == '2':
-            if money >= 20:
-                water += 10
-                money -= 20
-                print("You purchased Clean Water.")
-            else:
-                print("You don't have enough money!")
-        elif choice == '3':
-            if money >= 30:
-                inventory["medicine"] += 1
-                money -= 30
-                print("You purchased Premium Medicine.")
-            else:
-                print("You don't have enough money!")
-        elif choice == '4':
-            if money >= 25:
-                inventory["tools"] += 1
-                money -= 25
-                print("You purchased Quality Tools.")
-            else:
-                print("You don't have enough money!")
-        elif choice == '5':
-            break
+                print("You don't have enough money to buy from the merchant.")
         else:
-            print("Invalid choice! Please choose again.")
-
-# Status function
-def display_status():
-    print("\nCurrent Status:")
-    print(f"Health: {health}")
-    print(f"Food: {food}")
-    print(f"Water: {water}")
-    print(f"Stamina: {stamina}")
-    print(f"Morale: {morale}")
-    print(f"Money: ${money}")
-    print(f"Miles Traveled: {miles_traveled}/{DISTANCE_GOAL}")
-    print(f"Days Passed: {days_passed}")
-    print("Inventory:", inventory)
-
-# Game over check
-def check_game_over():
-    global health
-    if health <= 0:
-        print("You have succumbed to the dangers of the Oregon Trail. Game Over.")
-        return True
-    elif miles_traveled >= DISTANCE_GOAL:
-        print("Congratulations! You have reached Oregon!")
-        return True
-    return False
+            print("You decided not to buy anything.")
 
 # Save game function
 def save_game(slot):
@@ -347,7 +327,9 @@ def save_game(slot):
         'miles_traveled': miles_traveled,
         'days_passed': days_passed,
         'inventory': inventory,
-        'recent_actions': recent_actions
+        'recent_actions': recent_actions,
+        'difficulty': difficulty,
+        'jameson_mode': jameson_mode
     }
     with open(f"{save_file_prefix}{slot}.pkl", "wb") as f:
         pickle.dump(save_data, f)
@@ -355,10 +337,9 @@ def save_game(slot):
 
 # Load game function
 def load_game(slot):
-    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, recent_actions
-    try:
-        with open(f"{save_file_prefix}{slot}.pkl", "rb") as f:
-            save_data = pickle.load(f)
+    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, recent_actions, difficulty, jameson_mode
+    with open(f"{save_file_prefix}{slot}.pkl", "rb") as f:
+        save_data = pickle.load(f)
         player_name = save_data['player_name']
         health = save_data['health']
         food = save_data['food']
@@ -370,48 +351,58 @@ def load_game(slot):
         days_passed = save_data['days_passed']
         inventory = save_data['inventory']
         recent_actions = save_data['recent_actions']
-        print(f"Game loaded from slot {slot}.")
-    except FileNotFoundError:
-        print(f"No save found in slot {slot}.")
+        difficulty = save_data['difficulty']
+        jameson_mode = save_data['jameson_mode']
+    print(f"Game loaded from slot {slot}.")
 
 # Main game loop
-def main():
+def main_game_loop():
     global player_name
+    player_name = input("Enter your name: ")
     clear_screen()
     display_intro()
-    player_name = input("Enter your name: ")
     set_difficulty()
-    color_theme = select_color_theme()
     
-    while True:
+    while miles_traveled < DISTANCE_GOAL:
         clear_screen()
-        print(color_theme + f"Welcome, {player_name}! Current Theme: {color_theme}")
-        display_status()
-        action = input("What would you like to do next? (travel, save, load, status, exit): ").strip().lower()
+        print(f"Distance Traveled: {miles_traveled}/{DISTANCE_GOAL} miles")
+        print(f"Health: {health}, Food: {food}, Water: {water}, Stamina: {stamina}, Morale: {morale}, Money: {money}")
+        print("Recent Actions:")
+        for action in recent_actions[-5:]:
+            print(f"- {action}")
         
-        if action == "travel":
+        print("\nWhat would you like to do?")
+        print("1. Travel")
+        print("2. Visit the Store")
+        print("3. Save Game")
+        print("4. Load Game")
+        print("5. Exit Game")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == '1':
             travel()
-            if check_game_over():
-                break
-        elif action == "save":
-            slot = input("Select save slot (1-5): ")
+        elif choice == '2':
+            store_menu()
+        elif choice == '3':
+            slot = input(f"Select save slot (1-{SAVE_SLOTS}): ")
             if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
                 save_game(slot)
             else:
-                print("Invalid slot! Please choose a slot between 1 and 5.")
-        elif action == "load":
-            slot = input("Select load slot (1-5): ")
+                print("Invalid slot!")
+        elif choice == '4':
+            slot = input(f"Select load slot (1-{SAVE_SLOTS}): ")
             if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
                 load_game(slot)
             else:
-                print("Invalid slot! Please choose a slot between 1 and 5.")
-        elif action == "status":
-            display_status()
-        elif action == "exit":
-            print("Thank you for playing! Goodbye!")
+                print("Invalid slot!")
+        elif choice == '5':
+            print("Thank you for playing!")
             break
         else:
-            print("Invalid action! Please choose again.")
+            print("Invalid choice! Please select again.")
+        time.sleep(1)
 
+# Start the game
 if __name__ == "__main__":
-    main()
+    main_game_loop()
