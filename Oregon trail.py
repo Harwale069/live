@@ -1,399 +1,237 @@
 import random
 import time
-import pickle
-import os
-import subprocess
-import sys
-import curses
-from threading import Thread
-from datetime import datetime
 
 # Constants
-START_MONEY = 100
-DISTANCE_GOAL = 1000
-START_HEALTH = 100
-START_FOOD = 50
-START_WATER = 40
-START_STAMINA = 100
-START_MORALE = 75
-FOOD_PER_TRAVEL = 10
-WATER_PER_TRAVEL = 5
-STAMINA_PER_TRAVEL = 10
-MORALE_LOSS_TRAVEL = 5
-EVENT_COUNTDOWN = 3
-DEBUG_MODE = False
-
-# Events, terrains, and professions
+MAX_HEALTH = 100
+INITIAL_MONEY = 100
+INITIAL_FOOD = 50
+INITIAL_WATER = 40
+INITIAL_STAMINA = 100
+INITIAL_MORALE = 75
+TRAVEL_DISTANCE = 89  # Distance traveled in one travel action
+DAYS_PER_TRAVEL = 1
+MAX_COMPANIONS = 3
 EVENTS = [
-    "You encounter a wild animal!",
-    "A storm is approaching.",
-    "You meet a stranger who offers you food.",
-    "You find a river to rest by.",
-    "A band of hostile travelers attacks you!",
-    "You find an abandoned cabin.",
-    "You discover a hidden stash of supplies.",
-    "You stumble upon a lost traveler who needs help.",
-    "You experience a miraculous turn of luck!",
-    "A local merchant offers rare goods."
+    "Found a hidden treasure!",
+    "A wild animal attacks!",
+    "Met a friendly traveler!",
+    "Caught in a storm!",
+    "A companion falls ill!",
+    "Discovered a useful item!",
+    "Faced a difficult choice!",
 ]
-
-TERRAINS = ["Desert", "Forest", "Mountains", "Plains", "River"]
-WEATHERS = ["Sunny", "Rainy", "Snowy", "Windy"]
-PROFESSIONS = ["Hunter", "Fisher", "Trapper", "Merchant", "Traveler"]
-
-# Player stats
-player_name = ""
-health = START_HEALTH
-food = START_FOOD
-water = START_WATER
-stamina = START_STAMINA
-morale = START_MORALE
-money = START_MONEY
-miles_traveled = 0
-days_passed = 0
-inventory = {"medicine": 0, "ammunition": 0, "tools": 0}
-companions = []
-event_counter = EVENT_COUNTDOWN
-difficulty = ""
-pace = "Normal"
-
-# Color themes
-THEMES = {
-    "default": "\033[0m",
-    "red": "\033[91m",
-    "green": "\033[92m",
-    "yellow": "\033[93m",
-    "blue": "\033[94m",
-    "magenta": "\033[95m",
-    "cyan": "\033[96m",
-    "white": "\033[97m",
+WEATHER_CONDITIONS = ["Sunny", "Rainy", "Snowy", "Windy"]
+TRADING_ITEMS = {
+    "Food": 10,
+    "Water": 5,
+    "Tools": 15,
 }
+RESOURCES = ["Food", "Water", "Ammunition", "Tools"]
+MAX_STAMINA = 100
 
-# ASCII visuals
-ASCII_VIEWS = {
-    "river": r"""
-         ~ ~ ~
-       ~       ~
-     ~~~~~~~~~~~~
-    """,
-    "cabin": r"""
-        ___
-       /   \
-      |     |
-      |_____|""",
-}
+class Player:
+    def __init__(self, name, profession):
+        self.name = name
+        self.profession = profession
+        self.health = MAX_HEALTH
+        self.food = INITIAL_FOOD
+        self.water = INITIAL_WATER
+        self.stamina = INITIAL_STAMINA
+        self.morale = INITIAL_MORALE
+        self.money = INITIAL_MONEY
+        self.miles_traveled = 0
+        self.days_passed = 0
+        self.companions = []
 
-# Game save slots
-SAVE_SLOTS = 5
-save_file_prefix = "save_game_"
+    def travel(self, pace):
+        if pace == "Slow":
+            distance = TRAVEL_DISTANCE - 20
+        elif pace == "Normal":
+            distance = TRAVEL_DISTANCE
+        elif pace == "Fast":
+            distance = TRAVEL_DISTANCE + 20
 
-# Function to run a separate console for displaying actions
-def run_console():
-    while True:
-        print(f"Current Stats: Health: {health}, Food: {food}, Water: {water}, Stamina: {stamina}, Morale: {morale}, Money: {money}, Miles Traveled: {miles_traveled}, Days Passed: {days_passed}")
-        time.sleep(3)
+        # Adjust health and resources based on travel
+        self.miles_traveled += distance
+        self.days_passed += DAYS_PER_TRAVEL
+        self.food -= 2
+        self.water -= 1
+        self.stamina -= 10
+        self.morale -= random.randint(1, 5)
 
-# Introduction
-def display_intro():
-    print("Welcome to Oregon Trail Deluxe Edition!")
-    print("Your goal is to survive the treacherous journey to Oregon.")
-    print("Make wise choices and manage your resources well!")
-    print("You have a starting balance of ${}.".format(START_MONEY))
-    choose_profession()
+        if self.stamina < 0:
+            self.stamina = 0
 
-# Profession selection
-def choose_profession():
-    global profession
-    print("Choose your profession:")
-    for i, profession in enumerate(PROFESSIONS):
-        print(f"{i + 1}. {profession}")
-    choice = int(input("Enter the number of your choice: ")) - 1
-    profession = PROFESSIONS[choice]
+        self.random_event()
 
-# Display player stats
-def display_stats():
-    print("\nCurrent Stats:")
-    print("Health: {}".format(health))
-    print("Food: {}".format(food))
-    print("Water: {}".format(water))
-    print("Stamina: {}".format(stamina))
-    print("Morale: {}".format(morale))
-    print("Money: ${}".format(money))
-    print("Miles Traveled: {}".format(miles_traveled))
-    print("Days Passed: {}".format(days_passed))
+    def random_event(self):
+        event_chance = random.randint(1, 10)
+        if event_chance == 1:  # 10% chance of an event
+            event = random.choice(EVENTS)
+            print(f"Event: {event}")
+            if event == "A companion falls ill!":
+                if self.companions:
+                    ill_companion = random.choice(self.companions)
+                    print(f"{ill_companion.name} has fallen ill!")
+                    self.morale -= 5
+            elif event == "Discovered a useful item!":
+                found_item = random.choice(RESOURCES)
+                print(f"You found {found_item}!")
+                if found_item == "Food":
+                    self.food += 10
+                elif found_item == "Water":
+                    self.water += 10
+                elif found_item == "Ammunition":
+                    print("You found ammunition!")
+                elif found_item == "Tools":
+                    print("You found tools!")
 
-# Function to handle traveling
-def travel():
-    global miles_traveled, food, water, stamina, morale, days_passed, event_counter
+    def display_stats(self):
+        print(f"Current Stats:\n"
+              f"Health: {self.health}\n"
+              f"Food: {self.food}\n"
+              f"Water: {self.water}\n"
+              f"Stamina: {self.stamina}\n"
+              f"Morale: {self.morale}\n"
+              f"Money: ${self.money}\n"
+              f"Miles Traveled: {self.miles_traveled}\n"
+              f"Days Passed: {self.days_passed}\n")
 
-    if food <= 0 or water <= 0 or stamina <= 0:
-        print("You can't travel anymore. You need food, water, or rest!")
+    def add_companion(self, companion):
+        if len(self.companions) < MAX_COMPANIONS:
+            self.companions.append(companion)
+            print(f"{companion.name} has joined your party.")
+        else:
+            print("You cannot have more than 3 companions.")
+
+class Companion:
+    def __init__(self, name, skill):
+        self.name = name
+        self.skill = skill
+
+def hunt(player):
+    if player.food <= 0:
+        print("You need food to hunt.")
         return
 
-    # Change pace based on player choice
-    pace_choice = input("Choose your pace (Normal, Fast, Slow): ")
-    global pace
-    pace = pace_choice if pace_choice in ["Normal", "Fast", "Slow"] else "Normal"
-
-    distance = random.randint(50, 100)  # Random travel distance
-    if pace == "Fast":
-        distance *= 1.5
-        stamina -= 15
-    elif pace == "Slow":
-        distance *= 0.75
-        stamina -= 5
-
-    miles_traveled += distance
-    food -= FOOD_PER_TRAVEL
-    water -= WATER_PER_TRAVEL
-    stamina -= STAMINA_PER_TRAVEL
-    morale -= MORALE_LOSS_TRAVEL
-    days_passed += 1
-    event_counter -= 1
-
-    print("\nYou traveled {} miles.".format(distance))
-    print("You have {} miles left to reach Oregon.".format(DISTANCE_GOAL - miles_traveled))
-
-    # Check if an event occurs
-    if event_counter <= 0:
-        trigger_event()
-        event_counter = EVENT_COUNTDOWN
-
-    # Check if player reaches goal
-    if miles_traveled >= DISTANCE_GOAL:
-        print("Congratulations! You've reached Oregon!")
-        end_game()
-
-# Function to trigger random events
-def trigger_event():
-    event = random.choice(EVENTS)
-    print("\nEvent: " + event)
-
-    if event == EVENTS[0]:  # Wild animal encounter
-        handle_wild_animal()
-    elif event == EVENTS[1]:  # Storm
-        handle_storm()
-    elif event == EVENTS[2]:  # Stranger offers food
-        handle_stranger()
-    elif event == EVENTS[3]:  # Find a river
-        handle_river()
-    elif event == EVENTS[4]:  # Hostile travelers
-        handle_hostile_travelers()
-    elif event == EVENTS[5]:  # Abandoned cabin
-        handle_abandoned_cabin()
-    elif event == EVENTS[6]:  # Hidden stash
-        handle_hidden_stash()
-    elif event == EVENTS[7]:  # Lost traveler
-        handle_lost_traveler()
-    elif event == EVENTS[8]:  # Turn of luck
-        handle_turn_of_luck()
-    elif event == EVENTS[9]:  # Merchant offers goods
-        handle_merchant()
-
-# Event handlers
-def handle_wild_animal():
-    global health, morale
-    print("You encounter a wild animal! You lose 10 health.")
-    health -= 10
-    morale -= 5
-    display_stats()
-
-def handle_storm():
-    global stamina
-    print("A storm is approaching! You lose 10 stamina.")
-    stamina -= 10
-    display_stats()
-
-def handle_stranger():
-    global food
-    print("A stranger offers you food. You gain 20 food.")
-    food += 20
-    display_stats()
-
-def handle_river():
-    print("You find a river to rest by. Your morale improves by 10.")
-    print(ASCII_VIEWS["river"])
-    global morale
-    morale += 10
-    display_stats()
-
-def handle_hostile_travelers():
-    global health, morale
-    print("A band of hostile travelers attacks you! You lose 20 health and 10 morale.")
-    health -= 20
-    morale -= 10
-    display_stats()
-
-def handle_abandoned_cabin():
-    global food, water
-    print("You find an abandoned cabin. You gain 30 food and 20 water.")
-    print(ASCII_VIEWS["cabin"])
-    food += 30
-    water += 20
-    display_stats()
-
-def handle_hidden_stash():
-    global money
-    print("You discover a hidden stash of supplies! You gain $50.")
-    money += 50
-    display_stats()
-
-def handle_lost_traveler():
-    print("You stumble upon a lost traveler who needs help. Your morale improves by 10.")
-    global morale
-    morale += 10
-    display_stats()
-
-def handle_turn_of_luck():
-    global money
-    print("You experience a miraculous turn of luck! You gain $100.")
-    money += 100
-    display_stats()
-
-def handle_merchant():
-    print("A local merchant offers rare goods. You can buy supplies.")
-    print("1. Food ($5 each)")
-    print("2. Water ($3 each)")
-    print("3. Medicine ($10 each)")
-    choice = input("Choose an item to buy (1-3) or type 'exit' to leave: ")
-    if choice == '1':
-        quantity = int(input("How many units of food would you like to buy? "))
-        total_cost = quantity * 5
-        if money >= total_cost:
-            money -= total_cost
-            global food
-            food += quantity
-            print(f"You bought {quantity} units of food.")
-        else:
-            print("You don't have enough money!")
-    elif choice == '2':
-        quantity = int(input("How many units of water would you like to buy? "))
-        total_cost = quantity * 3
-        if money >= total_cost:
-            money -= total_cost
-            global water
-            water += quantity
-            print(f"You bought {quantity} units of water.")
-        else:
-            print("You don't have enough money!")
-    elif choice == '3':
-        quantity = int(input("How many units of medicine would you like to buy? "))
-        total_cost = quantity * 10
-        if money >= total_cost:
-            money -= total_cost
-            global inventory
-            inventory["medicine"] += quantity
-            print(f"You bought {quantity} units of medicine.")
-        else:
-            print("You don't have enough money!")
-    elif choice == 'exit':
-        print("You decided not to buy anything.")
+    hunt_success = random.choice([True, False])
+    if hunt_success:
+        food_found = random.randint(5, 15)
+        player.food += food_found
+        print(f"You successfully hunted and found {food_found} units of food!")
     else:
-        print("Invalid choice!")
+        print("You went hunting but returned empty-handed.")
 
-# Save game function
-def save_game(slot):
-    with open(f"{save_file_prefix}{slot}.pkl", "wb") as file:
-        pickle.dump((player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace), file)
-    print("Game saved successfully!")
+def fish(player):
+    if player.water <= 0:
+        print("You need water nearby to fish.")
+        return
 
-# Load game function
-def load_game(slot):
-    global player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace
-    if os.path.exists(f"{save_file_prefix}{slot}.pkl"):
-        with open(f"{save_file_prefix}{slot}.pkl", "rb") as file:
-            (player_name, health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory, companions, pace) = pickle.load(file)
-        print("Game loaded successfully!")
+    fish_success = random.choice([True, False])
+    if fish_success:
+        fish_caught = random.randint(3, 10)
+        player.food += fish_caught
+        print(f"You caught {fish_caught} units of fish!")
     else:
-        print("Save slot is empty!")
+        print("You tried to fish but didn't catch anything.")
 
-# End game function
-def end_game():
-    print("Game Over!")
-    print("You made it {} miles and survived for {} days.".format(miles_traveled, days_passed))
-    print("Thank you for playing!")
-    exit()
+def check_companions(player):
+    if not player.companions:
+        print("You have no companions.")
+    else:
+        print("Your companions:")
+        for companion in player.companions:
+            print(f"{companion.name} - Skill: {companion.skill}")
 
-# Main game loop
-def main():
-    global player_name
-    # Start separate console for displaying actions
-    Thread(target=run_console, daemon=True).start()
+def weather_report():
+    current_weather = random.choice(WEATHER_CONDITIONS)
+    print(f"Current weather: {current_weather}")
 
-    display_intro()
-    player_name = input("What is your name, traveler? ")
+def trading_post(player):
+    print("Welcome to the Trading Post!")
+    print("Available items for trade:")
+    for item, price in TRADING_ITEMS.items():
+        print(f"{item}: ${price}")
+
+    trade_choice = input("Which item would you like to trade for? (Food, Water, Tools) ")
+    if trade_choice in TRADING_ITEMS:
+        if player.money >= TRADING_ITEMS[trade_choice]:
+            player.money -= TRADING_ITEMS[trade_choice]
+            if trade_choice == "Food":
+                player.food += 1
+            elif trade_choice == "Water":
+                player.water += 1
+            elif trade_choice == "Tools":
+                print("You traded for tools.")
+            print(f"You traded for {trade_choice}.")
+        else:
+            print("You don't have enough money for that item.")
+    else:
+        print("Invalid choice.")
+
+def camp(player):
+    print("You set up camp for the night.")
+    player.stamina += 20
+    if player.stamina > MAX_STAMINA:
+        player.stamina = MAX_STAMINA
+    player.food -= 1  # Consuming food for the camp
+    print(f"Stamina restored to {player.stamina}. You consumed 1 unit of food.")
+
+def add_companion(player):
+    name = input("Enter the name of your companion: ")
+    skill = input("Enter the skill of your companion (Hunter, Fisher, Merchant): ")
+    companion = Companion(name, skill)
+    player.add_companion(companion)
+
+def game_loop():
+    name = input("What is your name, traveler? ")
+    profession = input("Choose your profession (Hunter, Fisher, Trapper, Merchant): ")
+    player = Player(name, profession)
 
     while True:
-        display_stats()
-        print("\nOptions:")
+        player.display_stats()
+        print("Options:")
         print("1. Travel")
-        print("2. Save Game")
-        print("3. Load Game")
+        print("2. Save Game (not implemented)")
+        print("3. Load Game (not implemented)")
         print("4. Exit Game")
         print("5. Hunt (Requires food)")
         print("6. Fish (Requires water nearby)")
         print("7. Check Companions")
+        print("8. Weather Report")
+        print("9. Visit Trading Post")
+        print("10. Set up Camp")
+        print("11. Add Companion")
         
-        choice = input("What would you like to do? (1-7): ")
+        choice = input("What would you like to do? (1-11): ")
 
         if choice == "1":
-            travel()
+            pace = input("Choose your pace (Normal, Fast, Slow): ")
+            player.travel(pace)
         elif choice == "2":
-            slot = input(f"Enter save slot (1-{SAVE_SLOTS}): ")
-            if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
-                save_game(slot)
-            else:
-                print("Invalid save slot!")
+            print("Save Game (not implemented)")
         elif choice == "3":
-            slot = input(f"Enter save slot to load (1-{SAVE_SLOTS}): ")
-            if slot.isdigit() and 1 <= int(slot) <= SAVE_SLOTS:
-                load_game(slot)
-            else:
-                print("Invalid load slot!")
+            print("Load Game (not implemented)")
         elif choice == "4":
-            print("Exiting the game. Goodbye!")
+            print("Exiting game. Goodbye!")
             break
         elif choice == "5":
-            hunt()
+            hunt(player)
         elif choice == "6":
-            fish()
+            fish(player)
         elif choice == "7":
-            check_companions()
+            check_companions(player)
+        elif choice == "8":
+            weather_report()
+        elif choice == "9":
+            trading_post(player)
+        elif choice == "10":
+            camp(player)
+        elif choice == "11":
+            add_companion(player)
         else:
-            print("Invalid choice. Please try again.")
+            print("Invalid choice. Please choose again.")
 
-# Hunting mechanism
-def hunt():
-    global food
-    print("You go hunting...")
-    success = random.choice([True, False])
-    if success:
-        food_gained = random.randint(10, 50)
-        food += food_gained
-        print(f"You successfully hunted and gained {food_gained} food!")
-    else:
-        print("You failed to hunt anything.")
-
-# Fishing mechanism
-def fish():
-    global food
-    print("You go fishing...")
-    success = random.choice([True, False])
-    if success:
-        food_gained = random.randint(10, 40)
-        food += food_gained
-        print(f"You caught some fish and gained {food_gained} food!")
-    else:
-        print("You didn't catch any fish.")
-
-# Check companions
-def check_companions():
-    if companions:
-        print("Your companions:")
-        for companion in companions:
-            print(companion)
-    else:
-        print("You have no companions.")
-
+# Start the game
 if __name__ == "__main__":
-    main()
+    game_loop()
