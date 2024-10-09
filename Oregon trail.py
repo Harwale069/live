@@ -251,143 +251,82 @@ def trade_with_merchant():
             if money >= 25:
                 food += 10
                 money -= 25
-                print("You purchased a Special Food Pack!")
+                print("You purchased a Special Food Pack.")
             else:
-                print("You don't have enough money.")
+                print("You don't have enough money!")
         elif choice == '2':
             if money >= 20:
                 water += 10
                 money -= 20
-                print("You purchased Clean Water!")
+                print("You purchased Clean Water.")
             else:
-                print("You don't have enough money.")
+                print("You don't have enough money!")
         elif choice == '3':
             if money >= 30:
                 inventory["medicine"] += 1
                 money -= 30
-                print("You purchased Premium Medicine!")
+                print("You purchased Premium Medicine.")
             else:
-                print("You don't have enough money.")
+                print("You don't have enough money!")
         elif choice == '4':
             if money >= 25:
                 inventory["tools"] += 1
                 money -= 25
-                print("You purchased Quality Tools!")
+                print("You purchased Quality Tools.")
             else:
-                print("You don't have enough money.")
+                print("You don't have enough money!")
         elif choice == '5':
-            print("You leave the merchant.")
             break
         else:
-            print("Invalid choice!")
+            print("Invalid choice! Please choose again.")
 
-# Display player status
+# Status function
 def display_status():
-    clear_screen()
-    print("Player Status:")
-    print(f"Name: {player_name}")
+    print("\nCurrent Status:")
     print(f"Health: {health}")
     print(f"Food: {food}")
     print(f"Water: {water}")
     print(f"Stamina: {stamina}")
     print(f"Morale: {morale}")
     print(f"Money: ${money}")
-    print(f"Miles Traveled: {miles_traveled} miles")
-    print(f"Days Passed: {days_passed} days")
-    print(f"Inventory: {inventory}")
-    print("-" * 50)
+    print(f"Miles Traveled: {miles_traveled}/{DISTANCE_GOAL}")
+    print(f"Days Passed: {days_passed}")
+    print("Inventory:", inventory)
 
-# Profession selection
-def choose_profession():
-    global player_name
-    player_name = input("Enter your name: ")
-    print("Choose your profession:")
-    print("1. Doctor (Health specialist)")
-    print("2. Farmer (Food specialist)")
-    print("3. Hunter (Food and survival expert)")
-    print("4. Jameson (Newbie)")
-
-    while True:
-        profession_choice = input("Your choice (1-4): ")
-        if profession_choice == '1':
-            print("You have chosen Doctor!")
-            # Doctor benefits
-            global START_HEALTH
-            START_HEALTH += 20
-            break
-        elif profession_choice == '2':
-            print("You have chosen Farmer!")
-            # Farmer benefits
-            global START_FOOD
-            START_FOOD += 20
-            break
-        elif profession_choice == '3':
-            print("You have chosen Hunter!")
-            # Hunter benefits
-            global START_FOOD, START_MONEY
-            START_FOOD += 10
-            START_MONEY += 20
-            break
-        elif profession_choice == '4':
-            print("You have chosen Jameson! Good luck!")
-            # Jameson starts with lower stats
-            START_HEALTH -= 30
-            START_FOOD -= 20
-            START_WATER -= 10
-            break
-        else:
-            print("Invalid choice! Please choose again.")
+# Game over check
+def check_game_over():
+    global health
+    if health <= 0:
+        print("You have succumbed to the dangers of the Oregon Trail. Game Over.")
+        return True
+    elif miles_traveled >= DISTANCE_GOAL:
+        print("Congratulations! You have reached Oregon!")
+        return True
+    return False
 
 # Main game loop
-def game_loop():
-    global health, food, water, stamina, morale, money, miles_traveled, days_passed, inventory
-    choose_profession()
+def main():
+    global player_name
+    clear_screen()
+    display_intro()
+    player_name = input("Enter your name: ")
     set_difficulty()
-    while health > 0 and miles_traveled < DISTANCE_GOAL:
+    
+    while True:
+        travel()
         display_status()
-        print("Choose an action:")
-        print("1. Travel")
-        print("2. Check Status")
-        print("3. Rest")
-        print("4. Trade with Merchant")
-        print("5. Exit Game")
-        
-        choice = input("Your choice: ")
-        
-        if choice == '1':
-            travel()
-        elif choice == '2':
+        if check_game_over():
+            break
+        action = input("What would you like to do next? (travel, status, exit): ").strip().lower()
+        if action == "travel":
+            continue
+        elif action == "status":
             display_status()
-        elif choice == '3':
-            rest()
-        elif choice == '4':
-            trade_with_merchant()
-        elif choice == '5':
-            print("Thank you for playing! Safe travels.")
+        elif action == "exit":
+            print("Thank you for playing! Goodbye!")
             break
         else:
-            print("Invalid choice, please try again.")
-    
-    if health <= 0:
-        print("You have succumbed to your injuries and failed the journey.")
-    elif miles_traveled >= DISTANCE_GOAL:
-        print("Congratulations! You have reached your destination and survived the Oregon Trail!")
+            print("Invalid action! Please choose again.")
 
-# Rest function
-def rest():
-    global health, stamina, food, morale
-    clear_screen()
-    print("You choose to rest.")
-    stamina += 30
-    health += 20
-    morale += 5
-    food -= 5  # Resting consumes some food
-    if food < 0:
-        food = 0
-        health -= 5
-        print("You ran out of food while resting! Health decreased.")
-    print("You feel refreshed after resting!")
-
-# Run the game
 if __name__ == "__main__":
-    game_loop()
+    main()
