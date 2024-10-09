@@ -4,6 +4,7 @@ import pickle
 import os
 
 # Constants
+START_MONEY = 100  # Define your starting money amount
 DISTANCE_GOAL = 1000  # Total distance to travel (miles)
 START_HEALTH = 100
 START_FOOD = 50
