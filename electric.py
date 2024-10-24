@@ -7,7 +7,22 @@ RED = "\033[91m"
 YELLOW = "\033[93m"
 BLUE = "\033[94m"
 CYAN = "\033[96m"
+MAGENTA = "\033[95m"
 RESET = "\033[0m"
+
+# Calculator function for math-related questions
+def calculator_mode():
+    print(f"{CYAN}--- Calculator Mode ---{RESET}")
+    print("You can now use the calculator for help with calculations.")
+    while True:
+        expression = input("Enter the calculation (e.g., '5 + 3 * 2') or type 'exit' to quit: ")
+        if expression.lower() == 'exit':
+            break
+        try:
+            result = eval(expression)
+            print(f"{GREEN}Result: {result}{RESET}\n")
+        except:
+            print(f"{RED}Invalid calculation! Please enter a valid expression.{RESET}\n")
 
 # Flashcard mode for review
 def flashcard_mode():
@@ -18,6 +33,8 @@ def flashcard_mode():
         {"question": "What type of wire is typically red?", "answer": "Hot wire"},
         {"question": "What is the formula for total resistance in series?", "answer": "R_total = R1 + R2"},
         {"question": "What is the formula for total resistance in parallel?", "answer": "1/R_total = 1/R1 + 1/R2"},
+        {"question": "What color is the ground wire?", "answer": "Green"},
+        {"question": "What type of circuit connects components end-to-end?", "answer": "Series"},
     ]
     print(f"{CYAN}Welcome to Flashcards Mode!{RESET}")
     input("Press Enter to begin flipping cards...\n")
@@ -28,7 +45,7 @@ def flashcard_mode():
         print(f"{GREEN}A: {card['answer']}{RESET}\n")
         input("Press Enter to continue...\n")
 
-# Quiz function with the option to skip
+# Quiz function with calculator and skip option
 def quiz_with_skip():
     challenges = [
         {
@@ -53,8 +70,8 @@ def quiz_with_skip():
         },
         {
             "question": "Given two capacitors in series: C1 = 5 µF and C2 = 5 µF, what is the total capacitance (C_total)?",
-            "answer": 10,
-            "explanation": "Capacitances in series are added: 5 µF + 5 µF = 10 µF."
+            "answer": 2.5,
+            "explanation": "Capacitances in series combine as 1/C_total = 1/C1 + 1/C2."
         }
     ]
 
@@ -62,10 +79,15 @@ def quiz_with_skip():
     total_questions = len(challenges)
     for challenge in challenges:
         print(f"{BLUE}{challenge['question']}{RESET}")
-        user_input = input("Your answer (or type 'skip' to skip this question): ")
+        user_input = input("Your answer (or type 'skip' to skip this question, or 'calc' for the calculator): ")
+        
         if user_input.lower() == 'skip':
             print(f"{YELLOW}You chose to skip this question.{RESET}\n")
             continue
+        elif user_input.lower() == 'calc':
+            calculator_mode()
+            user_input = input("Now enter your answer: ")
+
         try:
             if float(user_input) == float(challenge['answer']):
                 print(f"{GREEN}Correct! Well done.{RESET}\n")
@@ -81,7 +103,7 @@ def quiz_with_skip():
 
         print(f"{CYAN}Explanation: {challenge['explanation']}{RESET}\n")
         time.sleep(1)
-    
+
     print(f"{CYAN}Your final score is: {score}/{total_questions}{RESET}\n")
 
 # Main game loop
@@ -111,5 +133,3 @@ def main():
 
 # Run the game
 main()
-
-britney's laptop
