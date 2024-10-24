@@ -87,8 +87,8 @@ def quiz_with_skip():
 # Main game loop
 def main():
     print(f"{YELLOW}****************************************{RESET}")
-    print(f"{YELLOW}*  Welcome to the Electrical Engineering  *{RESET}")
-    print(f"{YELLOW}*            Interactive Game            *{RESET}")
+    print(f"{YELLOW}*         Welcome to Alex Harwood's       *{RESET}")
+    print(f"{YELLOW}* Electrical Engineering  Interactive Game*{RESET}")
     print(f"{YELLOW}****************************************{RESET}")
     input(f"{CYAN}Press Enter to begin...{RESET}\n")
 
@@ -111,3 +111,4 @@ def main():
 
 # Run the game
 main()
+
