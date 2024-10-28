@@ -1,59 +1,58 @@
-let score = 0;
-let questionIdx = 0;
-
 const questions = [
-    { 
-        question: "What is the total resistance (R_total) for R1 = 5 Ω and R2 = 3 Ω in series?", 
-        answer: 8, 
-        hint: "In series circuits, resistances add up." 
+    {
+        question: "What is the total resistance (R_total) for R1 = 5 Ω and R2 = 3 Ω in series?",
+        answer: 8,
+        hint: "In series circuits, resistances add up."
     },
-    { 
-        question: "What is the secondary voltage (V_s) for a primary voltage of 131 V and turns ratio of 1.57?", 
-        answer: 206.04, 
-        hint: "Use V_secondary = V_primary * turns ratio." 
+    {
+        question: "What is the secondary voltage (V_s) for a primary voltage of 131 V and turns ratio of 1.57?",
+        answer: 206.04,
+        hint: "Use V_secondary = V_primary * turns ratio."
     }
 ];
 
+let currentQuestionIndex = 0;
+let score = 0;
+
+document.getElementById('submit').addEventListener('click', checkAnswer);
+document.getElementById('hint').addEventListener('click', showHint);
+document.getElementById('calculator').addEventListener('click', openCalculator);
+
 function displayQuestion() {
-    if (questionIdx < questions.length) {
-        document.getElementById("question").innerText = questions[questionIdx].question;
-        document.getElementById("answer").value = "";
-        document.getElementById("result").innerText = "";
-    } else {
-        document.getElementById("question-container").innerHTML = `<p>Game Over! Final Score: ${score}/${questions.length}</p>`;
-    }
+    document.getElementById('question').innerText = questions[currentQuestionIndex].question;
 }
 
 function checkAnswer() {
-    const userAnswer = parseFloat(document.getElementById("answer").value);
-    const correctAnswer = questions[questionIdx].answer;
-
-    if (!isNaN(userAnswer) && Math.abs(userAnswer - correctAnswer) < 0.01) {
+    const userAnswer = parseFloat(document.getElementById('answer').value);
+    if (userAnswer === questions[currentQuestionIndex].answer) {
         score++;
-        document.getElementById("result").innerText = "Correct! Well done!";
+        alert("Correct! Well done.");
     } else {
-        document.getElementById("result").innerText = `Incorrect. The correct answer was ${correctAnswer}.`;
+        alert(`Incorrect! The correct answer was ${questions[currentQuestionIndex].answer}.`);
     }
-    questionIdx++;
-    displayQuestion();
+    currentQuestionIndex++;
+    if (currentQuestionIndex < questions.length) {
+        displayQuestion();
+    } else {
+        alert(`Game Over! Your final score is: ${score}`);
+        location.reload(); // Reload the page to start over
+    }
+    document.getElementById('score').innerText = `Score: ${score}`;
+    document.getElementById('answer').value = ''; // Clear input
 }
 
 function showHint() {
-    alert(questions[questionIdx].hint);
+    alert(questions[currentQuestionIndex].hint);
 }
 
 function openCalculator() {
-    document.getElementById("calculator").style.display = "block";
-}
-
-function calculate() {
-    const expression = document.getElementById("calc-input").value;
+    const calc = prompt("Enter your calculation:");
     try {
-        const result = eval(expression);
-        document.getElementById("calc-result").innerText = "Result: " + result;
-    } catch (e) {
-        document.getElementById("calc-result").innerText = "Invalid expression!";
+        alert(`Result: ${eval(calc)}`);
+    } catch {
+        alert("Invalid calculation.");
     }
 }
 
+// Initialize the first question
 displayQuestion();
