@@ -3,22 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electrical Engineering Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>My Interactive Games</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
+    <script src="script.js" defer></script> <!-- Link to external JavaScript -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #4a4a4a;
+        }
+        .game {
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #357ab8;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Electrical Engineering Interactive Game</h1>
-        <div id="question-area">
-            <p id="question"></p>
-            <input type="text" id="answer" placeholder="Enter your answer" />
-            <button id="submit">Submit Answer</button>
-            <button id="hint">Hint</button>
-            <button id="calculator">Calculator</button>
-        </div>
-        <p id="score"></p>
-        <div id="hint-area" class="hidden"></div>
+
+<header>
+    <h1>Welcome to My Interactive Games!</h1>
+</header>
+
+<section class="game">
+    <h2>Electrical Engineering Game</h2>
+    <div id="game-container">
+        <p id="question"></p>
+        <input type="text" id="answer" placeholder="Your answer...">
+        <button id="submit">Submit Answer</button>
+        <button id="hint">Hint</button>
+        <button id="calculator">Calculator</button>
     </div>
-    <script src="script.js"></script>
+    <p id="score"></p>
+</section>
+
+<script>
+    const questions = [
+        {
+            question: "What is the total resistance (R_total) for R1 = 5 Ω and R2 = 3 Ω in series?",
+            answer: 8,
+            hint: "In series circuits, resistances add up."
+        },
+        {
+            question: "What is the secondary voltage (V_s) for a primary voltage of 131 V and turns ratio of 1.57?",
+            answer: 206.04,
+            hint: "Use V_secondary = V_primary * turns ratio."
+        }
+    ];
+
+    let score = 0;
+    let currentQuestionIndex = 0;
+
+    const questionElement = document.getElementById('question');
+    const answerInput = document.getElementById('answer');
+    const scoreElement = document.getElementById('score');
+
+    document.getElementById('submit').addEventListener('click', checkAnswer);
+    document.getElementById('hint').addEventListener('click', showHint);
+
+    function loadQuestion() {
+        if (currentQuestionIndex < questions.length) {
+            questionElement.innerText = questions[currentQuestionIndex].question;
+        } else {
+            questionElement.innerText = "Game Over! Your score: " + score;
+        }
+    }
+
+    function checkAnswer() {
+        const userAnswer = parseFloat(answerInput.value);
+        if (userAnswer === questions[currentQuestionIndex].answer) {
+            score++;
+            scoreElement.innerText = "Score: " + score;
+            currentQuestionIndex++;
+            answerInput.value = "";
+            loadQuestion();
+        } else {
+            alert("Incorrect! The correct answer was " + questions[currentQuestionIndex].answer);
+            answerInput.value = "";
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+    }
+
+    function showHint() {
+        alert(questions[currentQuestionIndex].hint);
+    }
+
+    // Initialize the game
+    loadQuestion();
+</script>
 </body>
 </html>
