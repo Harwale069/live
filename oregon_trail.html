@@ -3,21 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oregon Trail Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Oregon Trail Adventure</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <h1>Oregon Trail</h1>
-        <div id="status-container">
-            <p id="health-status">Health: 100</p>
-            <p id="supplies-status">Supplies: 100</p>
-            <p id="distance-status">Distance to Oregon: 2000 miles</p>
-        </div>
-        <p id="event-description">You start your journey westward...</p>
-        <div id="choice-container"></div>
-        <button id="continue-btn">Continue</button>
+    <div id="login-container">
+        <h2>Create or Log in to Your Account</h2>
+        <input type="text" id="username" placeholder="Username">
+        <button onclick="login()">Login</button>
     </div>
+    
+    <div id="save-container" style="display:none;">
+        <h2>Welcome, <span id="user-name"></span>! Select a save slot:</h2>
+        <button onclick="loadGame(1)">Save Slot 1</button>
+        <button onclick="loadGame(2)">Save Slot 2</button>
+        <button onclick="loadGame(3)">Save Slot 3</button>
+    </div>
+    
+    <div id="game-container" style="display:none;">
+        <div id="status-panel">
+            <p id="day-status"></p>
+            <p id="health-status"></p>
+            <p id="supplies-status"></p>
+            <p id="distance-status"></p>
+        </div>
+        
+        <div id="art-panel">
+            <pre id="ascii-art"></pre>
+        </div>
+        
+        <div id="event-panel">
+            <p id="event-description">Get ready for your journey on the Oregon Trail!</p>
+            <div id="choice-container"></div>
+            <button id="continue-btn" onclick="startEvent()">Start Journey</button>
+        </div>
+    </div>
+
     <script src="oregon_trail.js"></script>
 </body>
 </html>
