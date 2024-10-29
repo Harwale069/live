@@ -22,6 +22,39 @@ function login() {
         alert("Please enter a valid username.");
     }
 }
+let creatingAccount = false;
+
+function toggleCreateAccount() {
+    creatingAccount = !creatingAccount;
+    document.querySelector("button[onclick='login()']").style.display = creatingAccount ? "none" : "inline";
+    document.querySelector("button[onclick='toggleCreateAccount()']").innerText = creatingAccount ? "Go to Login" : "Create Account";
+}
+
+function createAccount(username, password) {
+    if (localStorage.getItem(username)) {
+        alert("Username already exists. Choose another.");
+        return;
+    }
+    localStorage.setItem(username, JSON.stringify({ password, slot1: null, slot2: null, slot3: null }));
+    alert("Account created! You can now log in.");
+}
+
+function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    
+    const storedData = localStorage.getItem(username);
+    if (storedData) {
+        const { password: storedPassword } = JSON.parse(storedData);
+        if (creatingAccount) createAccount(username, password);
+        else if (storedPassword === password) {
+            currentUser = username;
+            document.getElementById("user-name").innerText = username;
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("save-container").style.display = "block";
+        } else alert("Incorrect password.");
+    } else alert("Account not found.");
+}
 
 function startNewGame(slot) {
     currentSlot = slot;
