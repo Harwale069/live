@@ -4,44 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oregon Trail Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e0f7fa;
-            color: #333;
-            text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            color: #00796b;
-        }
-        #startButton {
-            padding: 15px 30px;
-            background-color: #00796b;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #startButton:hover {
-            background-color: #004d40;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<h1>Welcome to the Oregon Trail Game!</h1>
-<p>Test your skills as you navigate the Oregon Trail.</p>
-<button id="startButton">Start Game</button>
-
-<script>
-    document.getElementById("startButton").onclick = function() {
-        // Start the game logic here
-        alert("Game Starting!"); // Placeholder for actual game start logic
-        // You can load the game functionality here
-    };
-</script>
-
+    <div id="game-container">
+        <h1>Oregon Trail</h1>
+        <div id="status-container">
+            <p id="health-status">Health: 100</p>
+            <p id="supplies-status">Supplies: 100</p>
+        </div>
+        <p id="event-description">You start your journey westward...</p>
+        <button id="continue-btn">Continue</button>
+    </div>
+    <script src="oregon_trail.js"></script>
 </body>
 </html>
