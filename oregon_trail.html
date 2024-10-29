@@ -9,15 +9,16 @@
 <body>
     <div id="login-container">
         <h2>Create or Log in to Your Account</h2>
-        <input type="text" id="username" placeholder="Username">
+        <input type="text" id="username" placeholder="Enter Username">
         <button onclick="login()">Login</button>
     </div>
     
     <div id="save-container" style="display:none;">
-        <h2>Welcome, <span id="user-name"></span>! Select a save slot:</h2>
-        <button onclick="loadGame(1)">Save Slot 1</button>
-        <button onclick="loadGame(2)">Save Slot 2</button>
-        <button onclick="loadGame(3)">Save Slot 3</button>
+        <h2>Welcome, <span id="user-name"></span>! Select a Save Slot:</h2>
+        <button onclick="startNewGame(1)">Slot 1</button>
+        <button onclick="startNewGame(2)">Slot 2</button>
+        <button onclick="startNewGame(3)">Slot 3</button>
+        <button onclick="logout()">Logout</button>
     </div>
     
     <div id="game-container" style="display:none;">
@@ -33,7 +34,7 @@
         </div>
         
         <div id="event-panel">
-            <p id="event-description">Get ready for your journey on the Oregon Trail!</p>
+            <p id="event-description">Welcome to the Oregon Trail!</p>
             <div id="choice-container"></div>
             <button id="continue-btn" onclick="startEvent()">Start Journey</button>
         </div>
