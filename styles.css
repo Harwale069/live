@@ -1,51 +1,37 @@
 body {
-    background-color: #f0f0f5;
     font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-
-.container {
-    text-align: center;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-}
-
-h1 {
+    background-color: #f8f8f2;
     color: #333;
+    text-align: center;
 }
 
-#question {
-    font-size: 20px;
-    margin-bottom: 10px;
+#login-container, #save-container, #game-container {
+    max-width: 500px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-input[type="text"] {
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+#status-panel, #art-panel, #event-panel {
+    margin: 20px 0;
 }
 
 button {
-    background-color: #28a745;
+    margin: 5px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
     color: white;
     border: none;
-    padding: 10px 15px;
-    margin: 5px;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #218838;
+    background-color: #45a049;
 }
 
-.hidden {
-    display: none;
+#ascii-art {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
 }
