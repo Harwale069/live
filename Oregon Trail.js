@@ -1,42 +1,15 @@
-let health = 100;
-let supplies = 100;
-let distance = 2000;
-let day = 1;
-let currentUser = "";
-let currentSlot = 0;
-let savedGames = {};
-
-// ASCII Art to enhance visual appeal
+let health, supplies, distance, day, currentUser, currentSlot;
+const defaultGameState = { health: 100, supplies: 100, distance: 2000, day: 1 };
 const asciiArt = `
     ______________________________________
    / \\                                     \\.
   |   | Oregon Trail Adventure             |
    \\_ |____________________________________|   
-      |                                   |
       | Journey Across the Untamed West!   |
       |___________________________________|
 `;
 
-// Initialize art panel
 document.getElementById("ascii-art").innerText = asciiArt;
-
-const events = [
-    {
-        description: "You encounter a river crossing.",
-        choices: [
-            { text: "Attempt to ford the river", healthChange: -10, suppliesChange: 0, distanceChange: -10 },
-            { text: "Look for another path", healthChange: 0, suppliesChange: -5, distanceChange: -5 }
-        ]
-    },
-    {
-        description: "A storm damages your supplies.",
-        choices: [
-            { text: "Take shelter", healthChange: -5, suppliesChange: -10, distanceChange: 0 },
-            { text: "Move forward despite the storm", healthChange: -10, suppliesChange: -5, distanceChange: -10 }
-        ]
-    }
-    // Additional events can be added here
-];
 
 function login() {
     const username = document.getElementById("username").value;
@@ -45,24 +18,40 @@ function login() {
         document.getElementById("user-name").innerText = username;
         document.getElementById("login-container").style.display = "none";
         document.getElementById("save-container").style.display = "block";
+    } else {
+        alert("Please enter a valid username.");
     }
 }
 
-function loadGame(slot) {
+function startNewGame(slot) {
     currentSlot = slot;
-    const userSave = savedGames[currentUser]?.[slot];
-    if (userSave) {
-        ({ health, supplies, distance, day } = userSave);
-    }
+    loadGame();
     document.getElementById("save-container").style.display = "none";
     document.getElementById("game-container").style.display = "block";
     updateStatus();
 }
 
+function loadGame() {
+    const savedData = localStorage.getItem(`${currentUser}_slot${currentSlot}`);
+    if (savedData) {
+        const gameState = JSON.parse(savedData);
+        ({ health, supplies, distance, day } = gameState);
+    } else {
+        ({ health, supplies, distance, day } = defaultGameState);
+    }
+}
+
 function saveGame() {
-    if (!savedGames[currentUser]) savedGames[currentUser] = {};
-    savedGames[currentUser][currentSlot] = { health, supplies, distance, day };
+    const gameState = { health, supplies, distance, day };
+    localStorage.setItem(`${currentUser}_slot${currentSlot}`, JSON.stringify(gameState));
     alert("Game saved!");
+}
+
+function logout() {
+    currentUser = null;
+    document.getElementById("game-container").style.display = "none";
+    document.getElementById("save-container").style.display = "none";
+    document.getElementById("login-container").style.display = "block";
 }
 
 function updateStatus() {
@@ -73,34 +62,24 @@ function updateStatus() {
 }
 
 function startEvent() {
-    const randomEvent = events[Math.floor(Math.random() * events.length)];
-    document.getElementById("event-description").innerText = randomEvent.description;
-    const choiceContainer = document.getElementById("choice-container");
-    choiceContainer.innerHTML = "";
+    const events = [
+        { description: "You encounter a river crossing.", healthChange: -10, suppliesChange: -5, distanceChange: -15 },
+        { description: "A storm damages your supplies.", healthChange: -5, suppliesChange: -10, distanceChange: -5 }
+    ];
+    
+    const event = events[Math.floor(Math.random() * events.length)];
+    document.getElementById("event-description").innerText = event.description;
 
-    randomEvent.choices.forEach((choice) => {
-        const choiceBtn = document.createElement("button");
-        choiceBtn.innerText = choice.text;
-        choiceBtn.addEventListener("click", () => makeChoice(choice));
-        choiceContainer.appendChild(choiceBtn);
-    });
-}
-
-function makeChoice(choice) {
-    health += choice.healthChange;
-    supplies += choice.suppliesChange;
-    distance -= choice.distanceChange;
+    health += event.healthChange;
+    supplies += event.suppliesChange;
+    distance += event.distanceChange;
     day += 1;
 
     updateStatus();
-    if (distance <= 0) {
-        endGame("Congratulations! You've reached Oregon!");
-    } else if (health <= 0 || supplies <= 0) {
-        endGame("Game Over. You've succumbed to the journey.");
-    } else {
-        saveGame();
-        startEvent();
-    }
+    saveGame();
+
+    if (distance <= 0) endGame("You made it to Oregon! Congratulations!");
+    else if (health <= 0 || supplies <= 0) endGame("You didn't survive the journey.");
 }
 
 function endGame(message) {
